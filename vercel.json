@@ -4,6 +4,9 @@
   "outputDirectory": "dist",
   "installCommand": "npm install",
   "framework": "vite",
+  "serverlessFunctionConfiguration": {
+    "maxDuration": 30
+  },
   "env": {
     "NODE_ENV": "production"
   }

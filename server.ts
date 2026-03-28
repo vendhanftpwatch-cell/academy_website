@@ -84,20 +84,24 @@ async function startServer() {
       await newApplication.save();
 
       // Send Email Notification (Optional but good practice)
+      let emailSent = false;
+      let emailError = null;
+      
       if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
-        const transporter = nodemailer.createTransport({
-          service: 'gmail',
-          auth: {
-            user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASS
-          }
-        });
+        try {
+          const transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+              user: process.env.EMAIL_USER,
+              pass: process.env.EMAIL_PASS
+            }
+          });
 
-        const mailOptions = {
-          from: process.env.EMAIL_USER,
-          to: process.env.EMAIL_USER, // Send to self for notification
-          subject: '📩 New Student Enrollment Request',
-          text: `Dear Team,
+          const mailOptions = {
+            from: process.env.EMAIL_USER,
+            to: process.env.EMAIL_USER, // Send to self for notification
+            subject: '📩 New Student Enrollment Request',
+            text: `Dear Team,
 
 You have received a new enrollment request. Below are the applicant details:
 
@@ -113,15 +117,23 @@ Kindly follow up with the applicant at the earliest.
 
 Best Regards,
 Vendhan Sports Academy`
-        };
+          };
 
-        transporter.sendMail(mailOptions, (error, info) => {
-          if (error) console.error('Email error:', error);
-          else console.log('Email sent:', info.response);
-        });
+          // IMPORTANT: Await the email sending to ensure it completes before response
+          await transporter.sendMail(mailOptions);
+          emailSent = true;
+          console.log('Email sent successfully for application:', fullName);
+        } catch (emailErr) {
+          emailError = emailErr.message;
+          console.error('Email error:', emailErr);
+        }
       }
 
-      res.status(201).json({ message: 'Application submitted successfully', data: newApplication });
+      res.status(201).json({ 
+        message: 'Application submitted successfully', 
+        data: newApplication,
+        emailStatus: emailSent ? 'sent' : (emailError ? `failed: ${emailError}` : 'not configured')
+      });
     } catch (err) {
       console.error('Application submission error:', err);
       res.status(500).json({ error: 'Failed to submit application' });

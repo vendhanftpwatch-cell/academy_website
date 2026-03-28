@@ -4,8 +4,8 @@
     "title": "Unleash the Power Within",
     "subtitle": "Where champions are forged through discipline, tradition, and modern excellence. Join the legacy of elite athletes.",
     "slides": [
-      "images/yoga1.PNG",
-      "images/HEROSEC.PNG",
+      "images/yoga1.png",
+      "images/HEROSEC.png",
       "https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=2000&auto=format&fit=crop",
       "https://images.unsplash.com/photo-1461896836934-ffe607ba8211?q=80&w=2000&auto=format&fit=crop"
     ]
@@ -16,7 +16,7 @@
       "title": "Yoga",
       "tagline": "Build Balance. Improve Focus. Live Better.",
       "description": "Yoga helps improve flexibility, reduce stress, and enhance mental clarity. Our sessions focus on breathing techniques, posture alignment, and relaxation methods.",
-      "image": "images/yoga3.PNG",
+      "image": "images/yoga3.png",
       "benefits": ["Better concentration", "Stress relief", "Improved flexibility", "Inner peace"],
       "speciality": "Personalized guidance for all age groups and fitness levels",
       "category": "Wellness"
@@ -26,7 +26,7 @@
       "title": "Silambam",
       "tagline": "Master the Ancient Art of Strength & Discipline",
       "description": "Silambam is a traditional martial art that builds agility, reflexes, and self-defense skills.",
-      "image": "images/Silambam(1).PNG",
+      "image": "images/Silambam(1).png",
       "benefits": ["Improves coordination", "Boosts stamina", "Enhances self-confidence"],
       "speciality": "Authentic training with focus on technique, speed, and discipline",
       "category": "Martial Arts"
@@ -36,7 +36,7 @@
       "title": "Physical Fitness",
       "tagline": "Stronger Body. Healthier Life.",
       "description": "Our fitness program focuses on overall body conditioning, strength, and endurance.",
-      "image": "images/PHISCFIT.PNG",
+      "image": "images/PHISCFIT.png",
       "benefits": ["Weight management", "Muscle strength", "Improved stamina"],
       "speciality": "Structured workouts tailored for beginners to advanced levels",
       "category": "Fitness"
@@ -46,7 +46,7 @@
       "title": "Aerobics",
       "tagline": "Fun Workouts That Keep You Active",
       "description": "Aerobics combines music and movement to make fitness enjoyable and energetic.",
-      "image": "images/aerobics1.PNG",
+      "image": "images/aerobics1.png",
       "benefits": ["Burns calories", "Improves heart health", "Boosts energy levels"],
       "speciality": "High-energy sessions with engaging routines",
       "category": "Fitness"
@@ -56,7 +56,7 @@
       "title": "Music",
       "tagline": "Discover Your Inner Rhythm",
       "description": "We nurture musical talent by training students in rhythm, voice, and instruments.",
-      "image": "images/music3.PNG",
+      "image": "images/music3.png",
       "benefits": ["Improves creativity", "Enhances memory", "Builds confidence"],
       "speciality": "Step-by-step learning for beginners and advanced learners",
       "category": "Arts"
@@ -66,7 +66,7 @@
       "title": "Badminton",
       "tagline": "Speed. Strategy. Precision.",
       "description": "Badminton improves reflexes, coordination, and agility through structured practice.",
-      "image": "images/badminton1.PNG",
+      "image": "images/badminton1.png",
       "benefits": ["Improves focus", "Boosts stamina", "Enhances reflex actions"],
       "speciality": "Professional coaching with match practice sessions",
       "category": "Sports"
@@ -76,7 +76,7 @@
       "title": "Athletics",
       "tagline": "Run Faster. Jump Higher. Achieve More.",
       "description": "Athletics training develops speed, endurance, and competitive spirit.",
-      "image": "images/athlet.PNG",
+      "image": "images/athlet.png",
       "benefits": ["Improves physical strength", "Builds discipline", "Enhances performance"],
       "speciality": "Focus on track & field techniques with performance tracking",
       "category": "Sports"
@@ -86,7 +86,7 @@
       "title": "Roller Skating",
       "tagline": "Glide with Confidence & Control",
       "description": "Roller skating enhances balance and coordination while being fun and exciting.",
-      "image": "images/roller-skating1.PNG",
+      "image": "images/roller-skating1.png",
       "benefits": ["Improves balance", "Strengthens muscles", "Increases agility"],
       "speciality": "Safe training environment with step-by-step skill development",
       "category": "Sports"
@@ -96,7 +96,7 @@
       "title": "Martial Arts",
       "tagline": "Discipline. Power. Self-Defense.",
       "description": "Martial arts training builds strength, confidence, and self-protection skills.",
-      "image": "images/karate-punches.PNG",
+      "image": "images/karate-punches.png",
       "benefits": ["Enhances focus", "Builds courage", "Improves physical fitness"],
       "speciality": "Emphasis on discipline, respect, and real-world self-defense",
       "category": "Martial Arts"
@@ -106,7 +106,7 @@
       "title": "Football",
       "tagline": "Teamwork. Passion. Performance.",
       "description": "Football training develops teamwork, stamina, and strategic thinking.",
-      "image": "images/football.PNG",
+      "image": "images/football.png",
       "benefits": ["Improves endurance", "Builds coordination", "Enhances teamwork"],
       "speciality": "Match-based training with skill development drills",
       "category": "Sports"
@@ -142,12 +142,11 @@
     {
       "name": "Dr.T. Ganesh Babu",
       "role": "Athlet, Silambam Grandmaster",
-      "image": "images/coach_ganesh.PNG"
+      "image": "images/coach_ganesh.png"
     },
     {
       "name": "N.P. NandhaKumar",
-      "role": "Martial Arts Coach
-Skating Taekwondo Karate | Silambam Certified Guidance and Counselling",
+      "role": "Martial Arts Coach Skating Taekwondo Karate | Silambam Certified Guidance and Counselling",
       "image": "images/coach_nandhu.png"
     },
     {

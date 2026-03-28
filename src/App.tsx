@@ -436,6 +436,11 @@ const Hero = () => {
 
 const Programs = () => {
   const { programs } = useContent();
+  const [expandedCard, setExpandedCard] = useState<string | null>(null);
+  
+  const toggleCardExpansion = (programId: string) => {
+    setExpandedCard(expandedCard === programId ? null : programId);
+  };
   
   return (
     <section id="programs" className="section-padding bg-white text-brand-navy">
@@ -465,23 +470,60 @@ const Programs = () => {
             initial={{ opacity: 0, scale: 0.95 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
-            className="md:col-span-2 lg:col-span-4 lg:row-span-2 relative group overflow-hidden rounded-sm min-h-[450px] md:min-h-[500px] lg:min-h-full border border-slate-100 shadow-sm flex flex-col"
+            className={`md:col-span-2 lg:col-span-4 lg:row-span-2 relative group overflow-hidden rounded-sm min-h-[450px] md:min-h-[500px] lg:min-h-full border border-slate-100 shadow-sm flex flex-col cursor-pointer transition-all duration-300 ${expandedCard === programs[0].id ? 'lg:col-span-8 lg:row-span-4 z-10' : ''}`}
+            onClick={() => toggleCardExpansion(programs[0].id)}
           >
             <div className="flex-1 relative overflow-hidden">
               <img src={programs[0].image} className="w-full h-full object-cover transition-all duration-700 group-hover:scale-105" referrerPolicy="no-referrer" alt={programs[0].title} />
+              {expandedCard === programs[0].id && (
+                <div className="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+              )}
             </div>
-            <div className="absolute bottom-6 left-6 right-6 bg-white p-6 md:p-8 shadow-2xl border border-slate-50">
+            <div className={`absolute bottom-6 left-6 right-6 bg-white p-6 md:p-8 shadow-2xl border border-slate-50 transition-all duration-300 ${expandedCard === programs[0].id ? 'relative static m-0 shadow-none border-none bg-white p-8' : ''}`}>
               <span className="text-[#D63384] text-[10px] font-black uppercase tracking-[0.2em] mb-2 block">{programs[0].category}</span>
-              <h3 className="text-3xl md:text-4xl font-black text-brand-navy leading-[0.85] mb-3 uppercase tracking-tighter">{programs[0].title}</h3>
-              <p className="text-slate-600 text-sm leading-relaxed mb-4 line-clamp-3">{programs[0].description}</p>
+              <h3 className={`text-3xl md:text-4xl font-black text-brand-navy leading-[0.85] mb-3 uppercase tracking-tighter transition-colors duration-300 ${expandedCard === programs[0].id ? 'text-black' : ''}`}>{programs[0].title}</h3>
+              <p className={`text-slate-600 text-sm leading-relaxed mb-4 line-clamp-3 transition-colors duration-300 ${expandedCard === programs[0].id ? 'text-slate-900 line-clamp-none' : ''}`}>{programs[0].description}</p>
+              
+              {expandedCard === programs[0].id && (
+                <div className="mb-6">
+                  <h4 className="text-black text-lg font-bold mb-3">What You'll Learn:</h4>
+                  <ul className="space-y-2">
+                    {programs[0].benefits.map((benefit, idx) => (
+                      <li key={idx} className="flex items-center text-slate-800">
+                        <CheckCircle2 className="w-4 h-4 text-[#D63384] mr-2 flex-shrink-0" />
+                        {benefit}
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="mt-6">
+                    <h4 className="text-black text-lg font-bold mb-3">Speciality:</h4>
+                    <p className="text-slate-700">{programs[0].speciality}</p>
+                  </div>
+                </div>
+              )}
+              
               <div className="w-full h-1.5 bg-[#D63384]/20 mb-4 relative overflow-hidden">
                 <div className="absolute top-0 left-0 h-full w-1/3 bg-[#D63384]"></div>
               </div>
               {/* LINKED TO CONTACT */}
-              <a href="#join" className="text-[10px] font-bold text-brand-navy uppercase tracking-widest hover:text-[#D63384] transition-colors inline-block">
-                Read Full Story
+              <a href="#join" className={`text-[10px] font-bold uppercase tracking-widest transition-colors inline-block ${expandedCard === programs[0].id ? 'text-brand-navy hover:text-[#D63384]' : 'text-brand-navy hover:text-[#D63384]'}`}>
+                {expandedCard === programs[0].id ? 'Join Now' : 'JOIN NOW'}
               </a>
             </div>
+            
+            {expandedCard === programs[0].id && (
+              <div className="absolute top-4 right-4 z-20">
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setExpandedCard(null);
+                  }}
+                  className="bg-white/20 backdrop-blur-sm text-white p-2 rounded-full hover:bg-white/30 transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            )}
           </motion.div>
 
           {/* Program Card 2 */}
@@ -572,7 +614,7 @@ const Programs = () => {
               </div>
               <div className="p-8 flex-1 flex flex-col group-hover:bg-[#D63384] transition-colors duration-500">
                 <h4 className="text-brand-navy group-hover:text-white text-2xl font-black leading-tight mb-4 uppercase tracking-tighter">{program.title}</h4>
-                <p className="text-slate-500 group-hover:text-white/80 text-sm leading-relaxed mb-6 line-clamp-2">{program.description}</p>
+                <p className="text-slate-500 group-hover:text-black/80 text-sm leading-relaxed mb-6 line-clamp-2">{program.description}</p>
                 <div className="mt-auto flex items-center gap-4">
                   <div className="w-8 h-px bg-slate-200 group-hover:bg-white/30"></div>
                   {/* LINKED TO CONTACT */}
@@ -605,7 +647,7 @@ const Programs = () => {
 const SummerCamp = ({ onImageClick }: { onImageClick: (url: string) => void }) => {
   const { summer_camp } = useContent();
   const { features } = summer_camp;
-  const campImages = ["images/sum1.PNG", "images/sum2.png", "images/sum3.png", "images/Summercamp1.png"];
+  const campImages = ["images/SUM1.png", "images/SUM2.png", "images/SUM3.png", "images/Summercamp1.png"];
 
   return (
     <section id="summer-camp" className="section-padding bg-brand-orange text-white overflow-hidden relative">
@@ -1009,11 +1051,11 @@ const AchievementShowcase = ({ onImageClick }: { onImageClick: (url: string) => 
 
 const Gallery = ({ onImageClick }: { onImageClick: (url: string) => void }) => {
   const [filter, setFilter] = useState('All');
-  const categories = ['All', 'Silambam', 'Football', 'Yoga', 'Athletics', 'Skating'];
+  const categories = ['All', 'Silambam', 'Badminton', 'Football', 'Yoga', 'Athletics', 'Skating', 'Aerobics', 'Boxing', 'Karate', 'Summer Camp'];
   
   const images = [
-    { cat: 'Silambam', url: 'images/silambam-practice-1.PNG' },
-	{ cat: 'badminton', url: 'images/badminton-group.PNG' },
+    { cat: 'Silambam', url: 'images/silambam-practice-1.png' },
+	{ cat: 'Badminton', url: 'images/badminton-group.png' },
     { cat: 'Football', url: 'images/football.png' },
     { cat: 'Yoga', url: 'images/yoga-sitting.png' },
     { cat: 'Athletics', url: 'images/athlet.png' },
@@ -1022,12 +1064,12 @@ const Gallery = ({ onImageClick }: { onImageClick: (url: string) => void }) => {
 	{ cat: 'Skating', url: 'images/skating-certif.png' },
 	{ cat: 'Skating', url: 'images/skating-cones.png' },
     { cat: 'Silambam', url: 'images/silambam-practice-2.png' },
-	{ cat: 'AEROBICS', url: 'images/AEROBICS.png' },
-	{ cat: 'boxing', url: 'images/boxing-kid.png' },
-	{ cat: 'karate', url: 'images/karate-punches.png' },
+	{ cat: 'Aerobics', url: 'images/AEROBICS.png' },
+	{ cat: 'Boxing', url: 'images/boxing-kid.png' },
+	{ cat: 'Karate', url: 'images/karate-punches.png' },
 	{ cat: 'Yoga', url: 'images/yoga-standing.png' },
-	{ cat: 'summer', url: 'images/summer-crafts.png' },
-	{ cat: 'summer', url: 'images/summer-fun-games.png' },
+	{ cat: 'Summer Camp', url: 'images/summer-crafts.png' },
+	{ cat: 'Summer Camp', url: 'images/summer-fun-games.png' },
   ];
 
   const filteredImages = filter === 'All' ? images : images.filter(img => img.cat === filter);
@@ -1125,7 +1167,7 @@ const ExpertGuidance = () => {
           <div className="relative">
             <div className="aspect-square rounded-[2.5rem] overflow-hidden shadow-2xl">
               <img 
-                src="images/phsic.PNG" 
+                src="images/phsic.png" 
                 alt="Academy Training" 
                 className="w-full h-full object-cover"
                 referrerPolicy="no-referrer"
@@ -1299,7 +1341,7 @@ const Footer = ({ onEdit }: { onEdit: () => void }) => {
               </li>
               <li className="flex items-center gap-3">
                 <Mail className="w-5 h-5 text-brand-orange shrink-0" />
-                <a href="mailto:info@vendhanacademy.com" className="hover:text-white">info@vendhanacademy.com</a>
+                <a href="mailto:vendhansportsacademy@gmail.com" className="hover:text-white">vendhansportsacademy@gmail.com</a>
               </li>
               <li className="flex items-center gap-3">
                 <Activity className="w-5 h-5 text-brand-orange shrink-0" />

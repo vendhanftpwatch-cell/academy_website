@@ -40,7 +40,7 @@ const PROGRAMS = contentData.programs;
 const EVENTS = contentData.events;
 const COACHES = contentData.coaches;
 const ACHIEVEMENTS = contentData.achievements;
-const SUMMER_CAMP_FEATURES = contentData.summer_camp.features;
+const SUMMER_CAMP_FEATURES = contentData.summer_camp?.features || [];
 
 // --- Types ---
 interface Program {
@@ -124,10 +124,17 @@ const ContentContext = React.createContext<Content | null>(null);
 
 const useContent = () => {
   const context = React.useContext(ContentContext);
-  if (!context) return contentData; 
-  return context;
-};
+  
+  // Checks if the database data actually contains information
+  const isDataValid = context && context.hero && context.programs && context.summer_camp;
 
+  if (isDataValid) {
+    return context;
+  }
+  
+  // If data is invalid or missing, return the local file data
+  return contentData; 
+};
 // --- Components ---
 
 const Lightbox = ({ imageUrl, onClose }: { imageUrl: string, onClose: () => void }) => {
@@ -378,15 +385,22 @@ const Navbar = () => {
 };
 
 const Hero = () => {
-  const [currentSlide, setCurrentSlide] = useState(0);
   const { hero } = useContent();
-  const { badge, title, subtitle, slides } = hero;
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  // Safely extract values with fallbacks
+  const badge = hero?.badge || "Welcome";
+  const title = hero?.title || "Vendhan Academy";
+  const subtitle = hero?.subtitle || "";
+  const slides = hero?.slides || ["images/hero1.png"];
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % slides.length);
-    }, 5000);
-    return () => clearInterval(timer);
+    if (slides.length > 0) {
+      const timer = setInterval(() => {
+        setCurrentSlide((prev) => (prev + 1) % slides.length);
+      }, 5000);
+      return () => clearInterval(timer);
+    }
   }, [slides.length]);
 
   return (
@@ -424,8 +438,12 @@ const Hero = () => {
             transition={{ duration: 0.8, delay: 0.5 }}
             className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl text-white mb-8 leading-[0.9] uppercase drop-shadow-2xl"
           >
-            {title.split(' ').slice(0, -2).join(' ')} <br />
-            <span className="text-brand-orange">{title.split(' ').slice(-2).join(' ')}</span>
+            {title.includes(' ') ? (
+              <>
+                {title.split(' ').slice(0, -2).join(' ')} <br />
+                <span className="text-brand-orange">{title.split(' ').slice(-2).join(' ')}</span>
+              </>
+            ) : title}
           </motion.h1>
           <motion.p 
             initial={{ opacity: 0, y: 20 }}
@@ -445,10 +463,9 @@ const Hero = () => {
               Explore Programs
               <ArrowRight className="w-4 sm:w-5 h-4 sm:h-5 group-hover:translate-x-1 transition-transform" />
             </a>
-            <a href="#rental" className="px-6 sm:px-8 py-3 sm:py-4 rounded-full font-bold text-base sm:text-lg text-white border border-white/30 hover:bg-white/10 transition-all flex items-center justify-center">
+            <div className="px-6 sm:px-8 py-3 sm:py-4 rounded-full font-bold text-base sm:text-lg text-white border border-white/30 bg-white/5 flex items-center justify-center">
               Facility Rental coming soon
-            </a>
-			
+            </div>
           </motion.div>
         </div>
       </div>
@@ -462,222 +479,141 @@ const Hero = () => {
           />
         ))}
       </div>
-
-      <div className="absolute bottom-10 right-10 hidden lg:block">
-        <div className="flex gap-4 items-center text-white/40">
-          <div className="w-20 h-px bg-white/20"></div>
-          <span className="text-xs uppercase tracking-widest font-bold">Scroll to discover</span>
-        </div>
-      </div>
     </section>
   );
 };
 
 const Programs = () => {
   const { programs } = useContent();
-  const [expandedCard, setExpandedCard] = useState<string | null>(null);
   
-  const toggleCardExpansion = (programId: string) => {
-    setExpandedCard(expandedCard === programId ? null : programId);
-  };
+  // Debug line: Open your browser console (F12) to see this number
+  console.log("Total programs loaded:", programs?.length);
+
+  if (!programs || programs.length === 0) return null;
+
+  // 1. Identify specific programs for the special "Journal" slots
+  // We use .find() so that if the ID matches, it goes in the right spot
+  const silambam = programs.find(p => p.id === 'silambam') || programs[0];
+  const badminton = programs.find(p => p.id === 'badminton') || programs[1];
+  const football = programs.find(p => p.id === 'football') || programs[2];
+  const yoga = programs.find(p => p.id === 'yoga') || programs[3];
+  const skating = programs.find(p => p.id === 'skating') || programs[4];
+
+  // 2. Identify ALL other programs for the bottom grid
+  // This identifies which IDs we already used in the top section
+  const usedIds = [silambam.id, badminton.id, football.id, yoga.id, skating.id];
   
+  // This array will contain every other program (Fitness, Music, Athletics, etc.)
+  const remainingPrograms = programs.filter(p => !usedIds.includes(p.id));
+
   return (
     <section id="programs" className="section-padding bg-white text-brand-navy">
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 md:px-8 lg:px-12">
-        {/* Section Header */}
+      <div className="max-w-[1300px] mx-auto px-6">
+        
+        {/* --- JOURNAL HEADER --- */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="mb-12 flex flex-col md:flex-row justify-between items-end gap-6"
+          className="mb-16 border-b border-slate-100 pb-8"
         >
-          <div className="max-w-2xl">
-            <span className="text-[#D63384] font-bold tracking-[0.3em] text-xs uppercase mb-3 block">Academy Journal</span>
-            <h2 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black uppercase tracking-tighter leading-[0.8] text-brand-navy mb-4">VENDHAN PROGRAMS</h2>
-            <p className="text-slate-500 text-lg leading-relaxed">Explore our diverse training programs through our latest academy news and highlights. From traditional arts to modern sports excellence.</p>
-          </div>
-          <div className="hidden lg:block text-right">
-            <div className="text-3xl font-serif italic text-slate-200 mb-1">Vol. 2026</div>
-            <div className="h-px w-24 bg-slate-100 ml-auto"></div>
-          </div>
+          <span className="text-[#D63384] font-bold tracking-[0.3em] text-[10px] uppercase mb-2 block">Academy Journal</span>
+          <h2 className="text-5xl md:text-7xl font-black uppercase tracking-tighter leading-none text-brand-navy">VENDHAN PROGRAMS</h2>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 md:gap-6">
+        {/* --- TOP ROW: SILAMBAM + BADMINTON/FOOTBALL --- */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-8">
           
-          {/* Main Featured Program (Large Card) */}
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.95 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            className={`md:col-span-2 lg:col-span-4 lg:row-span-2 relative group overflow-hidden rounded-sm min-h-[450px] md:min-h-[500px] lg:min-h-full border border-slate-100 shadow-sm flex flex-col cursor-pointer transition-all duration-300 ${expandedCard === programs[0].id ? 'lg:col-span-8 lg:row-span-4 z-10' : ''}`}
-            onClick={() => toggleCardExpansion(programs[0].id)}
-          >
-            <div className="flex-1 relative overflow-hidden">
-              <img src={programs[0].image} className="w-full h-full object-cover transition-all duration-700 group-hover:scale-105" referrerPolicy="no-referrer" alt={programs[0].title} />
-              {expandedCard === programs[0].id && (
-                <div className="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
-              )}
+          {/* Silambam (Large Featured) */}
+          <motion.div className="lg:col-span-5 relative group border border-slate-100">
+            <div className="h-[500px] lg:h-[600px] overflow-hidden">
+              <img src={silambam.image} className="w-full h-full object-cover" alt={silambam.title} />
             </div>
-            <div className={`absolute bottom-6 left-6 right-6 bg-white p-6 md:p-8 shadow-2xl border border-slate-50 transition-all duration-300 ${expandedCard === programs[0].id ? 'relative static m-0 shadow-none border-none bg-white p-8' : ''}`}>
-              <span className="text-[#D63384] text-[10px] font-black uppercase tracking-[0.2em] mb-2 block">{programs[0].category}</span>
-              <h3 className={`text-3xl md:text-4xl font-black text-brand-navy leading-[0.85] mb-3 uppercase tracking-tighter transition-colors duration-300 ${expandedCard === programs[0].id ? 'text-black' : ''}`}>{programs[0].title}</h3>
-              <p className={`text-slate-600 text-sm leading-relaxed mb-4 line-clamp-3 transition-colors duration-300 ${expandedCard === programs[0].id ? 'text-slate-900 line-clamp-none' : ''}`}>{programs[0].description}</p>
-              
-              {expandedCard === programs[0].id && (
-                <div className="mb-6">
-                  <h4 className="text-black text-lg font-bold mb-3">What You'll Learn:</h4>
-                  <ul className="space-y-2">
-                    {programs[0].benefits.map((benefit, idx) => (
-                      <li key={idx} className="flex items-center text-slate-800">
-                        <CheckCircle2 className="w-4 h-4 text-[#D63384] mr-2 flex-shrink-0" />
-                        {benefit}
-                      </li>
-                    ))}
-                  </ul>
-                  <div className="mt-6">
-                    <h4 className="text-black text-lg font-bold mb-3">Speciality:</h4>
-                    <p className="text-slate-700">{programs[0].speciality}</p>
-                  </div>
-                </div>
-              )}
-              
-              <div className="w-full h-1.5 bg-[#D63384]/20 mb-4 relative overflow-hidden">
-                <div className="absolute top-0 left-0 h-full w-1/3 bg-[#D63384]"></div>
-              </div>
-              {/* LINKED TO CONTACT */}
-              <a href="#join" className={`text-[10px] font-bold uppercase tracking-widest transition-colors inline-block ${expandedCard === programs[0].id ? 'text-brand-navy hover:text-[#D63384]' : 'text-brand-navy hover:text-[#D63384]'}`}>
-                {expandedCard === programs[0].id ? 'Join Now' : 'JOIN NOW'}
+            <div className="absolute bottom-10 left-6 right-6 bg-white p-8 shadow-2xl border border-slate-50">
+              <span className="text-slate-400 text-[10px] font-bold uppercase tracking-[0.2em] mb-2 block">{silambam.category}</span>
+              <h3 className="text-4xl font-black text-brand-navy leading-none mb-4 uppercase tracking-tighter">{silambam.title}</h3>
+              <p className="text-slate-500 text-xs leading-relaxed mb-6 line-clamp-3">{silambam.description}</p>
+              <a href="#join" className="text-[10px] font-black text-brand-navy uppercase tracking-widest border-b-2 border-brand-navy pb-1 hover:text-[#D63384] hover:border-[#D63384] transition-all">
+                Read Full Story
               </a>
             </div>
-            
-            {expandedCard === programs[0].id && (
-              <div className="absolute top-4 right-4 z-20">
-                <button 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setExpandedCard(null);
-                  }}
-                  className="bg-white/20 backdrop-blur-sm text-white p-2 rounded-full hover:bg-white/30 transition-colors"
-                >
-                  <X className="w-5 h-5" />
-                </button>
+          </motion.div>
+
+          {/* Side Stack (Badminton & Football) */}
+          <div className="lg:col-span-7 flex flex-col gap-8">
+            {/* Badminton */}
+            <div className="flex flex-col md:flex-row bg-white border border-slate-100 overflow-hidden h-full md:h-[285px]">
+              <div className="md:w-1/2 overflow-hidden">
+                <img src={badminton.image} className="w-full h-full object-cover" alt={badminton.title} />
               </div>
-            )}
-          </motion.div>
-
-          {/* Program Card 2 */}
-          <motion.div 
-            initial={{ opacity: 0, x: 20 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            className="md:col-span-2 lg:col-span-8 flex flex-col sm:flex-row bg-white border border-slate-100 overflow-hidden rounded-sm h-full lg:h-[280px] shadow-sm"
-          >
-            <div className="sm:w-1/2 h-56 sm:h-full overflow-hidden">
-              <img src={programs[1].image} className="w-full h-full object-cover transition-all duration-500" referrerPolicy="no-referrer" alt={programs[1].title} />
-            </div>
-            <div className="sm:w-1/2 p-6 md:p-8 flex flex-col justify-center">
-              <h4 className="text-[#D63384] text-2xl md:text-3xl font-black leading-[0.9] mb-3 uppercase tracking-tighter">{programs[1].title}</h4>
-              <p className="text-slate-600 text-sm leading-relaxed mb-3 line-clamp-2">{programs[1].description}</p>
-              <p className="text-slate-400 text-[10px] uppercase tracking-widest font-bold">Academy News / {programs[1].category}</p>
-            </div>
-          </motion.div>
-
-          {/* Program Card 3 */}
-          <motion.div 
-            initial={{ opacity: 0, x: 20 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            className="md:col-span-2 lg:col-span-8 flex flex-col-reverse sm:flex-row bg-white border border-slate-100 overflow-hidden rounded-sm h-full lg:h-[280px] shadow-sm"
-          >
-            <div className="sm:w-1/2 p-6 md:p-8 flex flex-col justify-center">
-              <h4 className="text-[#D63384] text-2xl md:text-3xl font-black leading-[0.9] mb-3 uppercase tracking-tighter">{programs[2].title}</h4>
-              <p className="text-slate-600 text-sm leading-relaxed mb-3 line-clamp-2">{programs[2].description}</p>
-              <p className="text-slate-400 text-[10px] uppercase tracking-widest font-bold">Academy News / {programs[2].category}</p>
-            </div>
-            <div className="sm:w-1/2 h-56 sm:h-full overflow-hidden">
-              <img src={programs[2].image} className="w-full h-full object-cover transition-all duration-500" referrerPolicy="no-referrer" alt={programs[2].title} />
-            </div>
-          </motion.div>
-
-          {/* Program Card 4 */}
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="md:col-span-1 lg:col-span-6 flex flex-col-reverse sm:flex-row lg:flex-col-reverse bg-white border border-slate-100 overflow-hidden rounded-sm h-full lg:h-[350px] shadow-sm"
-          >
-            <div className="p-6 md:p-8 flex flex-col justify-center flex-1">
-              <h4 className="text-[#D63384] text-2xl md:text-3xl font-black leading-[0.9] mb-4 uppercase tracking-tighter">{programs[3].title}</h4>
-              <p className="text-slate-600 text-sm leading-relaxed mb-4 line-clamp-3">{programs[3].description}</p>
-              <p className="text-slate-400 text-[10px] uppercase tracking-widest">Academy News / {programs[3].category}</p>
-            </div>
-            <div className="h-64 sm:h-48 lg:h-48 overflow-hidden">
-              <img src={programs[3].image} className="w-full h-full object-cover transition-all duration-500" referrerPolicy="no-referrer" alt={programs[3].title} />
-            </div>
-          </motion.div>
-
-          {/* Program Card 5 */}
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="md:col-span-1 lg:col-span-6 flex flex-col sm:flex-row lg:flex-col bg-slate-50 border border-slate-100 overflow-hidden rounded-sm h-full lg:h-[350px] shadow-sm"
-          >
-            <div className="h-64 sm:h-48 lg:h-48 overflow-hidden">
-              <img src={programs[4].image} className="w-full h-full object-cover transition-all duration-500" referrerPolicy="no-referrer" alt={programs[4].title} />
-            </div>
-            <div className="p-6 md:p-8 flex flex-col justify-center flex-1">
-              <h4 className="text-brand-navy text-2xl md:text-3xl font-black leading-[0.9] mb-4 uppercase tracking-tighter">{programs[4].title}</h4>
-              <p className="text-[#D63384] text-sm leading-relaxed mb-4 line-clamp-3">{programs[4].description}</p>
-              <p className="text-slate-400 text-[10px] uppercase tracking-widest">Academy News / {programs[4].category}</p>
-            </div>
-          </motion.div>
-
-          {/* Remaining Programs Grid */}
-          {programs.slice(5).map((program, idx) => (
-            <motion.div 
-              key={program.id}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: idx * 0.1 }}
-              className="md:col-span-1 lg:col-span-4 bg-white overflow-hidden rounded-sm border border-slate-100 group hover:shadow-2xl transition-all duration-500 flex flex-col"
-            >
-              <div className="relative h-48 overflow-hidden">
-                <img src={program.image} alt={program.title} className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110" referrerPolicy="no-referrer" />
-                  <div className="absolute top-4 left-4">
-                    <span className="bg-[#D63384] text-white text-[10px] font-black px-2 py-1 uppercase tracking-widest">
-                      {program.category}
-                    </span>
-                  </div>
+              <div className="md:w-1/2 p-8 flex flex-col justify-center">
+                <h4 className="text-[#D63384] text-3xl font-black leading-none mb-3 uppercase">{badminton.title}</h4>
+                <p className="text-slate-600 text-xs leading-relaxed mb-4">{badminton.description}</p>
+                <p className="text-slate-400 text-[9px] uppercase tracking-widest font-bold">ACADEMY NEWS / {badminton.category}</p>
               </div>
-              <div className="p-8 flex-1 flex flex-col group-hover:bg-[#D63384] transition-colors duration-500">
-                <h4 className="text-brand-navy group-hover:text-white text-2xl font-black leading-tight mb-4 uppercase tracking-tighter">{program.title}</h4>
-                <p className="text-slate-500 group-hover:text-black/80 text-sm leading-relaxed mb-6 line-clamp-2">{program.description}</p>
-                <div className="mt-auto flex items-center gap-4">
-                  <div className="w-8 h-px bg-slate-200 group-hover:bg-white/30"></div>
-                  {/* LINKED TO CONTACT */}
-                  <a href="#join" className="text-[10px] font-bold text-slate-400 group-hover:text-white uppercase tracking-widest transition-colors">
-                    Learn More
-                  </a>
-                </div>
+            </div>
+
+            {/* Football */}
+            <div className="flex flex-col md:flex-row-reverse bg-white border border-slate-100 overflow-hidden h-full md:h-[285px]">
+              <div className="md:w-1/2 overflow-hidden">
+                <img src={football.image} className="w-full h-full object-cover" alt={football.title} />
               </div>
-            </motion.div>
+              <div className="md:w-1/2 p-8 flex flex-col justify-center text-right md:text-left">
+                <h4 className="text-[#D63384] text-3xl font-black leading-none mb-3 uppercase">{football.title}</h4>
+                <p className="text-slate-600 text-xs leading-relaxed mb-4">{football.description}</p>
+                <p className="text-slate-400 text-[9px] uppercase tracking-widest font-bold">ACADEMY NEWS / {football.category}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* --- SECONDARY ROW: YOGA + SKATING --- */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          {[yoga, skating].map((program) => (
+            <div key={program.id} className="bg-white border border-slate-100 overflow-hidden">
+              <div className="h-64 overflow-hidden">
+                <img src={program.image} className="w-full h-full object-cover" alt={program.title} />
+              </div>
+              <div className="p-8">
+                <h4 className="text-[#D63384] text-3xl font-black leading-none mb-3 uppercase tracking-tighter">{program.title}</h4>
+                <p className="text-slate-600 text-xs leading-relaxed mb-4">{program.description}</p>
+                <p className="text-slate-400 text-[9px] uppercase tracking-widest font-bold">ACADEMY NEWS / {program.category}</p>
+              </div>
+            </div>
           ))}
         </div>
 
-        {/* Motivational Banner */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="mt-12 p-10 md:p-16 bg-slate-50 border border-slate-100 rounded-sm text-center text-brand-navy relative overflow-hidden"
-        >
-          <div className="relative z-10">
-            <h4 className="text-2xl md:text-3xl font-black mb-4 uppercase tracking-tighter max-w-4xl mx-auto leading-tight">“No matter your passion — fitness, sport, or art — we help you grow, perform, and succeed.”</h4>
-            <p className="text-[#D63384] uppercase tracking-[0.4em] text-[10px] font-bold">Vendhan Sports Academy / Est. 2024</p>
+        {/* --- REMAINING GRID: EVERY OTHER PROGRAM --- */}
+        {remainingPrograms.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {remainingPrograms.map((program) => (
+              <motion.div 
+                key={program.id}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                className="bg-white border border-slate-100 flex flex-col group"
+              >
+                <div className="h-56 overflow-hidden relative">
+                  <img src={program.image} className="w-full h-full object-cover transition-transform group-hover:scale-105" alt={program.title} />
+                  <div className="absolute top-0 left-0 bg-[#D63384] text-white text-[9px] font-bold px-3 py-1 uppercase tracking-widest">
+                    {program.category}
+                  </div>
+                </div>
+                <div className="p-8 flex-1 flex flex-col">
+                  <h4 className="text-brand-navy text-xl font-black leading-tight mb-3 uppercase">{program.title}</h4>
+                  <p className="text-slate-500 text-xs leading-relaxed mb-6 flex-1">{program.description}</p>
+                  <div className="pt-4 border-t border-slate-100">
+                    <a href="#join" className="text-[10px] font-bold text-slate-400 hover:text-[#D63384] uppercase tracking-widest transition-colors flex items-center gap-2">
+                      <div className="w-6 h-[1px] bg-slate-200"></div>
+                      Learn More
+                    </a>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
           </div>
-        </motion.div>
+        )}
       </div>
     </section>
   );
@@ -685,14 +621,17 @@ const Programs = () => {
 
 const SummerCamp = ({ onImageClick }: { onImageClick: (url: string) => void }) => {
   const { summer_camp } = useContent();
-  const { features } = summer_camp;
-  const campImages = ["images/SUM1.png", "images/SUM2.png", "images/SUM3.png", "images/Summercamp1.png"];
+  
+  // Safety check: if data is missing, use an empty list
+  const { features = [] } = summer_camp || {};
+  
+  const campImages = ["/images/SUM1.png", "/images/SUM2.png", "/images/SUM3.png", "/images/SUM4.png"];
 
   return (
     <section id="summer-camp" className="section-padding bg-brand-orange text-white overflow-hidden relative">
       <div className="absolute -top-24 -right-24 w-96 h-96 bg-white/10 rounded-full blur-3xl"></div>
       
-      <div className="max-w-7xl mx-auto relative z-10">
+      <div className="max-w-7xl mx-auto relative z-10 px-6">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
@@ -759,7 +698,6 @@ const SummerCamp = ({ onImageClick }: { onImageClick: (url: string) => void }) =
             </div>
 
             <div className="mt-12 flex flex-wrap gap-4">
-            {/* REPLACE LINE 523 to 525 WITH THIS */}
                  <a href="#join" 
                      className="bg-brand-navy text-white px-10 py-4 rounded-full font-bold text-lg hover:scale-105 transition-all shadow-xl shadow-black/20 text-center inline-block">
                       Register Now

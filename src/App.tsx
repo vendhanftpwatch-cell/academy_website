@@ -164,6 +164,23 @@ const Lightbox = ({ imageUrl, onClose }: { imageUrl: string, onClose: () => void
 const ContentEditor = ({ content, onSave, onCancel }: { content: Content, onSave: (newContent: Content) => void, onCancel: () => void }) => {
   const [json, setJson] = useState(JSON.stringify(content, null, 2));
   const [error, setError] = useState<string | null>(null);
+  const [contentInfo, setContentInfo] = useState<{ version: number; lastUpdatedAt: string; lastUpdatedBy: string } | null>(null);
+
+  useEffect(() => {
+    // Fetch content metadata from MongoDB
+    const fetchContentInfo = async () => {
+      try {
+        const response = await fetch('/api/content/info');
+        if (response.ok) {
+          const info = await response.json();
+          setContentInfo(info);
+        }
+      } catch (err) {
+        console.error('Error fetching content info:', err);
+      }
+    };
+    fetchContentInfo();
+  }, []);
 
   const handleSave = () => {
     try {
@@ -184,7 +201,7 @@ const ContentEditor = ({ content, onSave, onCancel }: { content: Content, onSave
         <div className="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
           <div>
             <h2 className="text-xl font-black text-brand-navy uppercase tracking-tighter">Content <span className="text-brand-orange">Editor</span></h2>
-            <p className="text-xs text-slate-500 font-bold uppercase tracking-widest mt-1">Edit your website content in real-time</p>
+            <p className="text-xs text-slate-500 font-bold uppercase tracking-widest mt-1">Connected to MongoDB • {contentInfo && <span>Version {contentInfo.version} • Last updated: {new Date(contentInfo.lastUpdatedAt).toLocaleString()}</span>}</p>
           </div>
           <div className="flex gap-3">
             <button 
@@ -1448,15 +1465,28 @@ export default function App() {
     try {
       const response = await fetch('/api/content', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-updated-by': 'admin'
+        },
         body: JSON.stringify(newContent),
       });
       if (response.ok) {
+        const result = await response.json();
         setContent(newContent);
         setIsEditing(false);
+        console.log('Content saved successfully', {
+          version: result.version,
+          lastUpdatedAt: result.lastUpdatedAt
+        });
+        // Optional: Show success toast/notification
+        alert(`Content updated successfully! (Version: ${result.version})`);
+      } else {
+        throw new Error('Failed to save content');
       }
     } catch (error) {
       console.error('Error saving content:', error);
+      alert('Failed to save content. Please try again.');
     }
   };
 

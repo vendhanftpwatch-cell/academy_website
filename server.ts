@@ -7,6 +7,7 @@ import path from 'path';
 import fs from 'fs/promises';
 import { fileURLToPath } from 'url';
 import { Application } from './src/models/Application.js';
+import { Content } from './src/models/Content.js';
 import nodemailer from 'nodemailer';
 
 dotenv.config();
@@ -36,11 +37,27 @@ async function startServer() {
   // Content Management API
   app.get('/api/content', async (req, res) => {
     try {
-      const data = await fs.readFile(CONTENT_FILE, 'utf-8');
-      res.json(JSON.parse(data));
+      // Try to fetch from MongoDB first
+      let content = await Content.findOne({});
+      
+      if (!content) {
+        // Fallback: Load from JSON file and save to MongoDB
+        try {
+          const data = await fs.readFile(CONTENT_FILE, 'utf-8');
+          const parsedData = JSON.parse(data);
+          content = new Content(parsedData);
+          await content.save();
+          console.log('Content synced from JSON file to MongoDB');
+        } catch (err) {
+          console.error('Error reading content file or syncing to MongoDB:', err);
+          return res.status(500).json({ error: 'Failed to read content' });
+        }
+      }
+      
+      res.json(content.toObject());
     } catch (err) {
-      console.error('Error reading content file:', err);
-      res.status(500).json({ error: 'Failed to read content' });
+      console.error('Error fetching content:', err);
+      res.status(500).json({ error: 'Failed to fetch content' });
     }
   });
 
@@ -53,7 +70,28 @@ async function startServer() {
         return res.status(400).json({ error: 'Invalid content format' });
       }
 
-      // Backup existing content
+      // Update or create in MongoDB
+      let content = await Content.findOne({});
+      
+      if (content) {
+        // Update existing
+        Object.assign(content, newContent);
+        content.lastUpdatedAt = new Date();
+        content.lastUpdatedBy = req.headers['x-updated-by'] || 'admin';
+        content.version = (content.version || 1) + 1;
+        await content.save();
+      } else {
+        // Create new
+        content = new Content({
+          ...newContent,
+          lastUpdatedAt: new Date(),
+          lastUpdatedBy: req.headers['x-updated-by'] || 'admin',
+          version: 1
+        });
+        await content.save();
+      }
+
+      // Also backup to JSON file for safety
       try {
         const currentData = await fs.readFile(CONTENT_FILE, 'utf-8');
         await fs.writeFile(`${CONTENT_FILE}.bak`, currentData);
@@ -62,10 +100,67 @@ async function startServer() {
       }
 
       await fs.writeFile(CONTENT_FILE, JSON.stringify(newContent, null, 2));
-      res.json({ message: 'Content updated successfully' });
+      
+      res.json({ 
+        message: 'Content updated successfully',
+        data: content,
+        version: content.version,
+        lastUpdatedAt: content.lastUpdatedAt
+      });
     } catch (err) {
-      console.error('Error writing content file:', err);
+      console.error('Error updating content:', err);
       res.status(500).json({ error: 'Failed to update content' });
+    }
+  });
+
+  // Get content metadata (version, last update info)
+  app.get('/api/content/info', async (req, res) => {
+    try {
+      const content = await Content.findOne({}, { hero: 0, programs: 0, events: 0, achievements: 0, coaches: 0, summer_camp: 0 });
+      if (!content) {
+        return res.json({ message: 'No content found', version: 0 });
+      }
+      res.json({
+        version: content.version,
+        lastUpdatedAt: content.lastUpdatedAt,
+        lastUpdatedBy: content.lastUpdatedBy
+      });
+    } catch (err) {
+      console.error('Error fetching content info:', err);
+      res.status(500).json({ error: 'Failed to fetch content info' });
+    }
+  });
+
+  // Sync content from JSON file to MongoDB
+  app.post('/api/content/sync', async (req, res) => {
+    try {
+      const data = await fs.readFile(CONTENT_FILE, 'utf-8');
+      const parsedData = JSON.parse(data);
+      
+      let content = await Content.findOne({});
+      if (content) {
+        Object.assign(content, parsedData);
+        content.lastUpdatedAt = new Date();
+        content.lastUpdatedBy = 'sync-from-file';
+        content.version = (content.version || 1) + 1;
+        await content.save();
+      } else {
+        content = new Content({
+          ...parsedData,
+          lastUpdatedAt: new Date(),
+          lastUpdatedBy: 'sync-from-file',
+          version: 1
+        });
+        await content.save();
+      }
+      
+      res.json({ 
+        message: 'Content synced successfully from JSON to MongoDB',
+        version: content.version
+      });
+    } catch (err) {
+      console.error('Error syncing content:', err);
+      res.status(500).json({ error: 'Failed to sync content' });
     }
   });
 

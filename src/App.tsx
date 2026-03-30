@@ -238,10 +238,16 @@ const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 50);
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50);
+      // Close mobile menu when scrolling
+      if (isMobileMenuOpen && window.scrollY > 50) {
+        setIsMobileMenuOpen(false);
+      }
+    };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [isMobileMenuOpen]);
 
 const navLinks = [
   { name: 'Programs', href: '#programs' },
@@ -299,39 +305,57 @@ const navLinks = [
           </motion.a>
         </div>
 
-        <button className="md:hidden text-brand-navy" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
-          {isMobileMenuOpen ? <X className={isScrolled ? 'text-brand-navy' : 'text-white'} /> : <Menu className={isScrolled ? 'text-brand-navy' : 'text-white'} />}
+        <button 
+          className="md:hidden p-2 rounded-lg transition-colors hover:bg-white/10"
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+        >
+          {isMobileMenuOpen ? (
+            <X className={`w-6 h-6 ${isScrolled ? 'text-brand-navy' : 'text-white'}`} />
+          ) : (
+            <Menu className={`w-6 h-6 ${isScrolled ? 'text-brand-navy' : 'text-white'}`} />
+          )}
         </button>
       </div>
 
       <AnimatePresence>
         {isMobileMenuOpen && (
-          <motion.div 
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="md:hidden bg-white border-b border-slate-100 overflow-hidden"
-          >
-            <div className="px-6 py-8 flex flex-col gap-6">
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="fixed inset-0 bg-black/20 md:hidden z-30"
+            />
+            <motion.div 
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="md:hidden bg-white/95 backdrop-blur-sm border-b border-slate-100 overflow-hidden z-40 shadow-lg"
+            >
+            <div className="px-6 py-8 flex flex-col gap-4">
               {navLinks.map((link) => (
                 <a 
                   key={link.name} 
                   href={link.href} 
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="text-lg font-semibold text-slate-800"
+                  className="text-base font-semibold text-slate-800 py-2 px-3 rounded-lg hover:bg-slate-100 transition-colors active:bg-brand-orange/20"
                 >
                   {link.name}
                 </a>
               ))}
-              <a 
-                href="#join" 
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="bg-brand-orange text-white px-6 py-4 rounded-xl text-center font-bold"
-              >
-                Join Academy
-              </a>
+              <div className="pt-4 border-t border-slate-200">
+                <a 
+                  href="#join" 
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="block bg-brand-orange text-white px-6 py-3 rounded-xl text-center font-bold hover:bg-orange-600 transition-all active:scale-95"
+                >
+                  Join Academy
+                </a>
+              </div>
             </div>
-          </motion.div>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
     </nav>

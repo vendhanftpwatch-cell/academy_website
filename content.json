@@ -202,7 +202,7 @@
     },
     {
       "label": "Years Experience",
-      "value": "2+",
+      "value": "1+",
       "icon": "Clock",
       "_id": "69ca0a26aee3139de02c6b67"
     },
@@ -255,7 +255,8 @@
       }
     ]
   },
-  "version": 1,
-  "lastUpdatedAt": "2026-03-30T05:29:10.650Z",
-  "__v": 0
+  "version": 2,
+  "lastUpdatedAt": "2026-03-30T05:42:25.027Z",
+  "__v": 1,
+  "lastUpdatedBy": "admin"
 }

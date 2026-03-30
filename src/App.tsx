@@ -170,7 +170,7 @@ const ContentEditor = ({ content, onSave, onCancel }: { content: Content, onSave
     // Fetch content metadata from MongoDB
     const fetchContentInfo = async () => {
       try {
-        const response = await fetch('/api/content/info');
+        const response = await fetch('/api/content-info');
         if (response.ok) {
           const info = await response.json();
           setContentInfo(info);
@@ -257,142 +257,120 @@ const Navbar = () => {
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
-      // Close mobile menu when scrolling
-      if (isMobileMenuOpen && window.scrollY > 50) {
-        setIsMobileMenuOpen(false);
-      }
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [isMobileMenuOpen]);
+  }, []);
 
-const navLinks = [
-  { name: 'Programs', href: '#programs' },
-  { name: 'Summer Camp', href: '#summer-camp' },
-  { name: 'Achievements', href: '#achievements' }, // Added this
-  { name: 'Rental', href: '#rental' },
-  { name: 'Events', href: '#events' },
-  { name: 'Gallery', href: '#gallery' },
-  { name: 'About', href: '#about' },
-];
+  const navLinks = [
+    { name: 'Programs', href: '#programs' },
+    { name: 'Summer Camp', href: '#summer-camp' },
+    { name: 'Achievements', href: '#achievements' },
+    { name: 'Rental', href: '#rental' },
+    { name: 'Events', href: '#events' },
+    { name: 'Gallery', href: '#gallery' },
+    { name: 'About', href: '#about' },
+  ];
+
+  // Logic to handle smooth scroll on mobile and close menu
+  const handleMobileLinkClick = (e, href) => {
+    e.preventDefault();
+    setIsMobileMenuOpen(false);
+    
+    // Small delay to allow menu animation to finish
+    setTimeout(() => {
+      const targetId = href.replace('#', '');
+      const element = document.getElementById(targetId);
+      if (element) {
+        // Offset for the fixed header height
+        const offset = 80; 
+        const bodyRect = document.body.getBoundingClientRect().top;
+        const elementRect = element.getBoundingClientRect().top;
+        const elementPosition = elementRect - bodyRect;
+        const offsetPosition = elementPosition - offset;
+
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: 'smooth'
+        });
+      }
+    }, 300);
+  };
 
   return (
-<nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${isScrolled ? 'bg-white/90 backdrop-blur-md shadow-sm py-2 sm:py-3' : 'bg-transparent py-4 sm:py-6'}`}>
-  <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 flex justify-between items-center">
-    <div className="flex items-center gap-3">
-      {/* Logo Image */}
-      <img src="images/logo.png" alt="Logo" className="w-16 h-16 md:w-20 md:h-20 object-contain" />
-      
-      {/* Two-Line Text Container */}
-      <div className={`flex flex-col leading-[1.0] font-display font-bold tracking-tight ${isScrolled ? 'text-brand-navy' : 'text-white'}`}>
-        {/* VENDHAN - All Caps */}
-        <span className="text-xl md:text-2xl uppercase">VENDHAN</span>
+    <nav className={`fixed top-0 w-full z-[100] transition-all duration-300 ${isScrolled ? 'bg-white shadow-md py-2' : 'bg-transparent py-4'}`}>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 flex justify-between items-center">
         
-        {/* Sports Academy - Mixed Case */}
-        <span className={`text-[11px] md:text-[13px] tracking-wide font-semibold ${isScrolled ? 'text-slate-600' : 'text-brand-orange'}`}>
-          Sports Academy
-        </span>
-      </div>
-    </div>
-    {/* Rest of the navbar items... */}
- 
-
-        <div className="hidden md:flex items-center gap-8">
-          {navLinks.map((link, idx) => (
-            <motion.a 
-              key={link.name} 
-              href={link.href} 
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 + idx * 0.1 }}
-              className={`text-sm font-medium transition-colors hover:text-brand-orange ${isScrolled ? 'text-slate-600' : 'text-white/90'}`}
-            >
-              {link.name}
-            </motion.a>
-          ))}
-
-          <motion.a 
-            href="#join" 
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5, delay: 0.6 }}
-            className="bg-brand-orange text-white px-6 py-2.5 rounded-full text-sm font-semibold hover:bg-orange-600 transition-all shadow-lg shadow-orange-500/20"
-          >
-            Join Academy
-          </motion.a>
+        {/* Logo Section */}
+        <div className="flex items-center gap-2">
+          <img src="images/logo.png" alt="Logo" className="w-12 h-12 md:w-16 md:h-16 object-contain" />
+          <div className={`flex flex-col leading-tight font-bold ${isScrolled ? 'text-brand-navy' : 'text-white'}`}>
+            <span className="text-lg md:text-xl uppercase tracking-tighter">VENDHAN</span>
+            <span className={`text-[10px] md:text-xs font-semibold ${isScrolled ? 'text-slate-500' : 'text-brand-orange'}`}>
+              Sports Academy
+            </span>
+          </div>
         </div>
 
+        {/* Desktop Links */}
+        <div className="hidden md:flex items-center gap-6 lg:gap-8">
+          {navLinks.map((link) => (
+            <a 
+              key={link.name} 
+              href={link.href} 
+              className={`text-sm font-bold transition-colors hover:text-brand-orange ${isScrolled ? 'text-slate-600' : 'text-white'}`}
+            >
+              {link.name}
+            </a>
+          ))}
+          <a href="#join" className="bg-brand-orange text-white px-5 py-2 rounded-full text-sm font-bold hover:scale-105 transition-all">
+            Join Academy
+          </a>
+        </div>
+
+        {/* Mobile Toggle Button */}
         <button 
-          className="md:hidden p-2 rounded-lg transition-colors hover:bg-white/10"
+          className="md:hidden p-2 z-[110]" 
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
         >
           {isMobileMenuOpen ? (
-            <X className={`w-6 h-6 ${isScrolled ? 'text-brand-navy' : 'text-white'}`} />
+            <X className="w-8 h-8 text-brand-navy" />
           ) : (
-            <Menu className={`w-6 h-6 ${isScrolled ? 'text-brand-navy' : 'text-white'}`} />
+            <Menu className={`w-8 h-8 ${isScrolled ? 'text-brand-navy' : 'text-white'}`} />
           )}
         </button>
       </div>
 
+      {/* Mobile Menu Overlay */}
       <AnimatePresence>
         {isMobileMenuOpen && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="fixed inset-0 bg-black/20 md:hidden z-30"
-            />
-            <motion.div 
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="md:hidden bg-white/95 backdrop-blur-sm border-b border-slate-100 overflow-hidden z-40 shadow-lg"
-            >
-            <div className="px-6 py-8 flex flex-col gap-4">
+          <motion.div 
+            initial={{ x: '100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '100%' }}
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            className="fixed inset-0 bg-white z-[105] flex flex-col p-8 md:hidden"
+          >
+            <div className="flex flex-col gap-6 mt-16">
               {navLinks.map((link) => (
                 <a 
                   key={link.name} 
                   href={link.href}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setIsMobileMenuOpen(false);
-                    // Navigate to the section after a brief delay to allow menu to close
-                    setTimeout(() => {
-                      const targetId = link.href.replace('#', '');
-                      const element = document.getElementById(targetId);
-                      if (element) {
-                        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                      }
-                    }, 100);
-                  }}
-                  className="text-base font-semibold text-slate-800 py-2 px-3 rounded-lg hover:bg-slate-100 transition-colors active:bg-brand-orange/20"
+                  onClick={(e) => handleMobileLinkClick(e, link.href)}
+                  className="text-2xl font-black text-brand-navy uppercase tracking-tighter border-b border-slate-100 pb-2"
                 >
                   {link.name}
                 </a>
               ))}
-              <div className="pt-4 border-t border-slate-200">
-                <a 
-                  href="#join"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setIsMobileMenuOpen(false);
-                    setTimeout(() => {
-                      const element = document.getElementById('join');
-                      if (element) {
-                        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                      }
-                    }, 100);
-                  }}
-                  className="block bg-brand-orange text-white px-6 py-3 rounded-xl text-center font-bold hover:bg-orange-600 transition-all active:scale-95"
-                >
-                  Join Academy
-                </a>
-              </div>
+              <a 
+                href="#join"
+                onClick={(e) => handleMobileLinkClick(e, '#join')}
+                className="mt-4 bg-brand-orange text-white px-8 py-4 rounded-2xl text-center text-xl font-bold"
+              >
+                Join Academy
+              </a>
             </div>
-            </motion.div>
-          </>
+          </motion.div>
         )}
       </AnimatePresence>
     </nav>

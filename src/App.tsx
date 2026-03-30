@@ -1150,6 +1150,7 @@ const ExpertGuidance = () => {
   return (
     <section id="about" className="section-padding bg-slate-50">
       <div className="max-w-7xl mx-auto">
+        {/* Welcome Section */}
         <motion.div 
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -1204,14 +1205,23 @@ const ExpertGuidance = () => {
           </div>
         </motion.div>
 
+        {/* Mentors Header */}
         <motion.div className="text-center mb-16">
           <h2 className="text-xs uppercase tracking-[0.2em] text-brand-orange font-bold mb-4">The Mentors</h2>
           <h3 className="text-4xl md:text-5xl text-brand-navy">Expert Guidance</h3>
         </motion.div>
 
-        <div className="grid md:grid-cols-3 gap-8">
-          {COACHES.map((coach, idx) => (
-            <motion.div key={coach.name} className="text-center group">
+        {/* Updated Coach Grid: Now 2 columns and centered */}
+        <div className="grid md:grid-cols-2 gap-12 max-w-4xl mx-auto">
+          {COACHES.slice(0, 2).map((coach, idx) => (
+            <motion.div 
+              key={coach.name} 
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: idx * 0.2 }}
+              className="text-center group"
+            >
               <div className="relative mb-6 inline-block">
                 <div className="w-48 h-48 md:w-56 md:h-56 rounded-full overflow-hidden border-4 border-white shadow-xl mx-auto relative z-10">
                   <img src={coach.image} alt={coach.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
@@ -1226,6 +1236,7 @@ const ExpertGuidance = () => {
           ))}
         </div>
 
+        {/* Stats Section */}
         <div className="mt-24 grid grid-cols-2 lg:grid-cols-4 gap-8">
           {ACHIEVEMENTS.map((stat, idx) => (
             <motion.div key={idx} className="text-center p-8 bg-white rounded-3xl shadow-sm border border-slate-100">

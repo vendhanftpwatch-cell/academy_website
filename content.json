@@ -199,7 +199,7 @@
   "coaches": [
     {
       "name": "Dr.T. Ganesh Babu",
-      "role": "Athlet, Silambam Grandmaster",
+      "role": "Yoga | badminton | Wellness Coach",
       "image": "/images/coach_ganesh.png"
     },
     {
@@ -208,9 +208,9 @@
       "image": "/images/coach_nandhu.png"
     }
   ],
-  "version": 10,
-  "lastUpdatedAt": "2026-03-30T09:02:27.688Z",
-  "__v": 6,
+  "version": 13,
+  "lastUpdatedAt": "2026-03-30T09:11:50.260Z",
+  "__v": 8,
   "lastUpdatedBy": "admin",
   "summer_camp": {
     "features": [

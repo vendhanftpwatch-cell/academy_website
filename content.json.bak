@@ -1,4 +1,5 @@
 {
+  "_id": "69ca0a26aee3139de02c6b57",
   "hero": {
     "badge": "Vendhan Sports Academy",
     "title": "Unleash the Power Within",
@@ -207,6 +208,10 @@
       "image": "/images/coach_nandhu.png"
     }
   ],
+  "version": 10,
+  "lastUpdatedAt": "2026-03-30T09:02:27.688Z",
+  "__v": 6,
+  "lastUpdatedBy": "admin",
   "summer_camp": {
     "features": [
       {

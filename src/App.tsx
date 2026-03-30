@@ -534,7 +534,7 @@ const Programs = () => {
               <h3 className="text-4xl font-black text-brand-navy leading-none mb-4 uppercase tracking-tighter">{silambam.title}</h3>
               <p className="text-slate-500 text-xs leading-relaxed mb-6 line-clamp-3">{silambam.description}</p>
               <a href="#join" className="text-[10px] font-black text-brand-navy uppercase tracking-widest border-b-2 border-brand-navy pb-1 hover:text-[#D63384] hover:border-[#D63384] transition-all">
-                Read Full Story
+                Join Now
               </a>
             </div>
           </motion.div>

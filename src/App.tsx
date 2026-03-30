@@ -354,8 +354,19 @@ const navLinks = [
               {navLinks.map((link) => (
                 <a 
                   key={link.name} 
-                  href={link.href} 
-                  onClick={() => setIsMobileMenuOpen(false)}
+                  href={link.href}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setIsMobileMenuOpen(false);
+                    // Navigate to the section after a brief delay to allow menu to close
+                    setTimeout(() => {
+                      const targetId = link.href.replace('#', '');
+                      const element = document.getElementById(targetId);
+                      if (element) {
+                        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      }
+                    }, 100);
+                  }}
                   className="text-base font-semibold text-slate-800 py-2 px-3 rounded-lg hover:bg-slate-100 transition-colors active:bg-brand-orange/20"
                 >
                   {link.name}
@@ -363,8 +374,17 @@ const navLinks = [
               ))}
               <div className="pt-4 border-t border-slate-200">
                 <a 
-                  href="#join" 
-                  onClick={() => setIsMobileMenuOpen(false)}
+                  href="#join"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setIsMobileMenuOpen(false);
+                    setTimeout(() => {
+                      const element = document.getElementById('join');
+                      if (element) {
+                        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      }
+                    }, 100);
+                  }}
                   className="block bg-brand-orange text-white px-6 py-3 rounded-xl text-center font-bold hover:bg-orange-600 transition-all active:scale-95"
                 >
                   Join Academy
@@ -1463,6 +1483,7 @@ export default function App() {
 
   const handleSaveContent = async (newContent: Content) => {
     try {
+      console.log('Saving content to MongoDB...');
       const response = await fetch('/api/content', {
         method: 'POST',
         headers: { 
@@ -1472,23 +1493,33 @@ export default function App() {
         body: JSON.stringify(newContent),
       });
       
-      const result = await response.json();
+      const contentType = response.headers.get('content-type');
+      let result;
+      
+      if (contentType && contentType.includes('application/json')) {
+        result = await response.json();
+      } else {
+        const text = await response.text();
+        console.error('Non-JSON response:', text);
+        throw new Error(`Server returned non-JSON response: ${text.substring(0, 100)}`);
+      }
       
       if (response.ok) {
         setContent(newContent);
         setIsEditing(false);
-        console.log('Content saved successfully', {
+        console.log('✅ Content saved successfully', {
           version: result.version,
           lastUpdatedAt: result.lastUpdatedAt
         });
         alert(`✅ Content updated successfully! (Version: ${result.version})`);
       } else {
-        console.error('Server error:', result);
-        throw new Error(result.error || 'Failed to save content');
+        console.error('Server error response:', result);
+        throw new Error(result.error || result.message || 'Failed to save content');
       }
     } catch (error) {
       console.error('Error saving content:', error);
-      alert(`❌ Failed to save content: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      alert(`❌ Failed to save content:\n\n${errorMessage}`);
     }
   };
 

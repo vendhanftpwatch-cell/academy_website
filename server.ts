@@ -76,49 +76,65 @@ async function startServer() {
       
       // Basic validation: ensure it's a valid object
       if (typeof newContent !== 'object' || newContent === null) {
+        console.error('Invalid content format:', typeof newContent);
         return res.status(400).json({ error: 'Invalid content format' });
       }
 
-      // Update or create in MongoDB
-      const updateData = {
-        ...newContent,
-        lastUpdatedAt: new Date(),
-        lastUpdatedBy: req.headers['x-updated-by'] || 'admin',
-        $inc: { version: 1 }
-      };
-
-      const content = await Content.findOneAndUpdate(
-        {},
-        {
-          ...newContent,
-          lastUpdatedAt: new Date(),
-          lastUpdatedBy: req.headers['x-updated-by'] || 'admin'
-        },
-        { upsert: true, new: true }
-      );
-
-      // Increment version manually since $inc doesn't work well with findOneAndUpdate
-      content.version = (content.version || 0) + 1;
-      await content.save();
-
-      // Also backup to JSON file for safety
+      // Update or create in MongoDB with proper error handling
       try {
-        const currentData = await fs.readFile(CONTENT_FILE, 'utf-8');
-        await fs.writeFile(`${CONTENT_FILE}.bak`, currentData);
-      } catch (e) {
-        console.warn('Could not create backup:', e);
-      }
+        let content = await Content.findOne({});
+        
+        if (content) {
+          // Update existing document
+          content.hero = newContent.hero || content.hero;
+          content.programs = newContent.programs || content.programs;
+          content.events = newContent.events || content.events;
+          content.achievements = newContent.achievements || content.achievements;
+          content.coaches = newContent.coaches || content.coaches;
+          content.summer_camp = newContent.summer_camp || content.summer_camp;
+          content.lastUpdatedAt = new Date();
+          content.lastUpdatedBy = req.headers['x-updated-by'] || 'admin';
+          content.version = (content.version || 0) + 1;
+          await content.save();
+          console.log('Content updated in MongoDB, version:', content.version);
+        } else {
+          // Create new document
+          content = new Content({
+            ...newContent,
+            lastUpdatedAt: new Date(),
+            lastUpdatedBy: req.headers['x-updated-by'] || 'admin',
+            version: 1
+          });
+          await content.save();
+          console.log('New content created in MongoDB, version:', content.version);
+        }
 
-      await fs.writeFile(CONTENT_FILE, JSON.stringify(newContent, null, 2));
-      
-      res.json({ 
-        message: 'Content updated successfully',
-        version: content.version,
-        lastUpdatedAt: content.lastUpdatedAt
-      });
+        // Backup JSON file
+        try {
+          const currentData = await fs.readFile(CONTENT_FILE, 'utf-8');
+          await fs.writeFile(`${CONTENT_FILE}.bak`, currentData);
+          console.log('JSON backup created');
+        } catch (e) {
+          console.warn('Could not create backup:', e.message);
+        }
+
+        // Update JSON file
+        await fs.writeFile(CONTENT_FILE, JSON.stringify(newContent, null, 2));
+        console.log('JSON file updated');
+        
+        return res.status(200).json({ 
+          message: 'Content updated successfully',
+          version: content.version,
+          lastUpdatedAt: content.lastUpdatedAt,
+          lastUpdatedBy: content.lastUpdatedBy
+        });
+      } catch (mongoErr) {
+        console.error('MongoDB update error:', mongoErr.message, mongoErr.stack);
+        return res.status(500).json({ error: 'Database error: ' + mongoErr.message });
+      }
     } catch (err) {
-      console.error('Error updating content:', err);
-      res.status(500).json({ error: 'Failed to update content', details: err.message });
+      console.error('Error updating content:', err.message, err.stack);
+      return res.status(500).json({ error: 'Failed to update content: ' + err.message });
     }
   });
 

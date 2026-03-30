@@ -139,7 +139,7 @@ async function startServer() {
   });
 
   // Get content metadata (version, last update info)
-  app.get('/api/content/info', async (req, res) => {
+  const contentInfoHandler = async (req: any, res: any) => {
     try {
       const content = await Content.findOne({}, { hero: 0, programs: 0, events: 0, achievements: 0, coaches: 0, summer_camp: 0 });
       if (!content) {
@@ -154,7 +154,10 @@ async function startServer() {
       console.error('Error fetching content info:', err);
       res.status(500).json({ error: 'Failed to fetch content info' });
     }
-  });
+  };
+
+  app.get('/api/content/info', contentInfoHandler);
+  app.get('/api/content-info', contentInfoHandler);  // Alias for serverless compatibility
 
   // Sync content from JSON file to MongoDB
   app.post('/api/content/sync', async (req, res) => {

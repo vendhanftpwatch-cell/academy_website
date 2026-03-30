@@ -174,28 +174,40 @@
       "date": "Dec 05, 2025"
     }
   ],
-  "achievements": [
+ 
+  "achievements_list": [
     {
-      "label": "Medals & Certificates",
-      "value": "100+",
-      "icon": "Trophy"
+      "title": "Medals & Certificates",
+      "number": "100+",
+      "label": "TOTAL",
+      "image": "images/skating-certif.png",
+      "description": "A testament to our students' hard work across district, state, and national levels.",
+      "subLinks": [
+        { "name": "Dindigul District Speed Roller Skating Championship-2025", "image": "images/skating-certif.png" },
+        { "name": "State Level Silambam Championship-2024", "image": "images/silambam-practice-1.png" },
+        { "name": "Inter-School Football Tournament Winner", "image": "images/football.png" },
+        { "name": "National Yoga Olympiad Participant", "image": "images/yoga-sitting.png" },
+        { "name": "Annual Athletics Meet Gold Medalist", "image": "images/athlet.png" }
+      ]
     },
     {
-      "label": "Happy Students",
-      "value": "50+",
-      "icon": "Users"
+      "title": "ARJUNA WORLD RECORD",
+      "number": "01",
+      "label": "WORLD RECORD",
+      "image": "images/world-record-boy.png",
+      "description": "2 Hours Non-Stop Silambam with Skating – A proud moment of dedication and excellence.",
+      "subLinks": []
     },
     {
-      "label": "Years Experience",
-      "value": "2+",
-      "icon": "Clock"
-    },
-    {
-      "label": "Success Rate",
-      "value": "100%",
-      "icon": "Award"
+      "title": "DISTRICT YOGA EXCELLENCE",
+      "number": "03",
+      "label": "AWARDS",
+      "image": "images/yoga-standing.png",
+      "description": "Recognized as the 'Best Training Center' for promoting traditional yoga practices.",
+      "subLinks": []
     }
   ],
+
   "coaches": [
     {
       "name": "Dr.T. Ganesh Babu",

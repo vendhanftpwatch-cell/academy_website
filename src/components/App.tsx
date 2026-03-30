@@ -2,44 +2,21 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
-
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Sword, 
-  Trophy, 
-  Users, 
-  Calendar, 
-  MapPin, 
-  ArrowRight, 
-  CheckCircle2, 
-  Instagram, 
-  Facebook, 
-  Twitter, 
-  Mail,
-  Menu, 
-  X,
-  Dribbble,
-  Activity,
-  Wind,
-  Zap,
-  Clock,
-  Star,
-  Award,
-  ChevronRight,
-  Sun,
-  Tent,
-  Flame,
-  Music,
-  Target
+  Sword, Trophy, Users, Calendar, MapPin, ArrowRight, CheckCircle2, 
+  Instagram, Facebook, Twitter, Mail, Menu, X, Dribbble, Activity, 
+  Wind, Zap, Clock, Star, Award, ChevronRight, Sun, Tent, Flame, Music, Target 
 } from 'lucide-react';
 import contentData from '../content.json';
+  
 
 // --- Constants from Content ---
 const PROGRAMS = contentData.programs;
 const EVENTS = contentData.events;
 const COACHES = contentData.coaches;
-const ACHIEVEMENTS = contentData.achievements;
+const ACHIEVEMENTS = contentData.achievements_list; 
 const SUMMER_CAMP_FEATURES = contentData.summer_camp?.features || [];
 
 // --- Types ---
@@ -125,17 +102,18 @@ const ContentContext = React.createContext<Content | null>(null);
 const useContent = () => {
   const context = React.useContext(ContentContext);
   
-  // Checks if the database data actually contains information
-  const isDataValid = context && context.hero && context.programs && context.summer_camp;
-
-  if (isDataValid) {
-    return context;
+  // If we have database data (from MongoDB)
+  if (context && context.hero) {
+    return {
+      ...contentData, // Backup from local file
+      ...context,     // Live data from database
+      // Ensure achievements_list is pulled from local if missing in database
+      achievements_list: context.achievements_list || contentData.achievements_list 
+    };
   }
   
-  // If data is invalid or missing, return the local file data
   return contentData; 
 };
-// --- Components ---
 
 const Lightbox = ({ imageUrl, onClose }: { imageUrl: string, onClose: () => void }) => {
   return (
@@ -870,161 +848,130 @@ const Events = () => {
 
 const AchievementShowcase = ({ onImageClick }: { onImageClick: (url: string) => void }) => {
   const [activeIndex, setActiveIndex] = useState(0);
+  const [hoveredSubLinkImage, setHoveredSubLinkImage] = useState<string | null>(null);
   
-  const achievements = [
-    {
-      title: "ARJUNA WORLD RECORD",
-      category: "Traditional Arts",
-      date: "Feb 2024",
-      image: "images/world-record-boy.png", // Updated to use your local images
-      description: "2 Hours Non-Stop Silambam with Skating – A proud moment of dedication, strength, and excellence.",
-      number: "01",
-      label: "ONE"
-    },
-    {
-      title: "Inter-Academy Football Cup",
-      category: "Sports",
-      date: "Nov 2025",
-      image: "images/skating-line.png", // Updated to use your local images
-      description: "VSA Under-16 team emerged as unbeaten champions in the regional football tournament held in Chennai.",
-      number: "02",
-      label: "TWO"
-    },
-    {
-      title: "District Yoga Excellence Award",
-      category: "Wellness",
-      date: "Aug 2025",
-      image: "images/skatechamps.png", // Updated to use your local images
-      description: "Recognized as the 'Best Training Center' for promoting traditional yoga practices among youngsters.",
-      number: "03",
-      label: "THREE"
-    }
-  ];
+  // Use the smart hook to get data (Database data + Local backup)
+  const content = useContent(); 
+  const data = content.achievements_list || [];
+
+  // Safety Check: If there's no data at all, don't show the section
+  if (data.length === 0) return null;
+
+  const current = data[activeIndex];
+  const displayImage = hoveredSubLinkImage || current?.image;
 
   return (
-    <section id="achievements" className="py-20 md:py-32 bg-slate-50 overflow-hidden min-h-[80vh] flex items-center">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 w-full">
+    <section id="achievements" className="py-20 md:py-32 bg-slate-50 overflow-hidden">
+      <div className="max-w-7xl mx-auto px-6">
         <div className="flex flex-col lg:flex-row items-center gap-16 lg:gap-24">
           
-          {/* Left Side: Showcase Card */}
-          <div className="lg:w-1/2 w-full relative">
-            <div className="relative aspect-[4/5] w-full max-w-[450px] mx-auto rounded-3xl overflow-hidden shadow-2xl bg-[#151619] group">
+          {/* LEFT SIDE: FEATURED CARD */}
+          <div className="lg:w-1/2 w-full">
+            <motion.div 
+              key={activeIndex}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="relative aspect-[4/5] w-full max-w-[450px] mx-auto rounded-[2rem] overflow-hidden shadow-2xl bg-[#151619] cursor-pointer group"
+              onClick={() => onImageClick(displayImage)}
+            >
+              {/* Image with Dark Overlay */}
               <AnimatePresence mode="wait">
-                <motion.div
-                  key={activeIndex}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.5, ease: "easeInOut" }}
-                  className="absolute inset-0"
-                >
-                  <img 
-                    src={achievements[activeIndex].image} 
-                    alt={achievements[activeIndex].title}
-                    className="w-full h-full object-cover opacity-60 group-hover:scale-110 transition-transform duration-1000"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#151619] via-[#151619]/20 to-transparent"></div>
-                  
-                  <div className="absolute inset-0 flex flex-col justify-center items-center text-white p-12 text-center">
-                    <motion.span 
-                      initial={{ opacity: 0, scale: 0.5 }}
-                      animate={{ opacity: 0.1, scale: 1 }}
-                      className="absolute text-[15rem] font-black tracking-tighter select-none pointer-events-none"
-                    >
-                      {achievements[activeIndex].number}
-                    </motion.span>
-                    
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.2 }}
-                      className="relative z-10"
-                    >
-                      <span className="text-[#F27D26] font-bold tracking-[0.3em] text-xs uppercase mb-4 block">
-                        {achievements[activeIndex].label}
-                      </span>
-                      <h4 className="text-4xl font-black uppercase tracking-tighter leading-none mb-6">
-                        {achievements[activeIndex].title}
-                      </h4>
-                      <p className="text-slate-300 text-sm leading-relaxed max-w-xs mx-auto">
-                        {achievements[activeIndex].description}
-                      </p>
-                    </motion.div>
-                  </div>
-                </motion.div>
+                <motion.img 
+                  key={displayImage}
+                  src={displayImage} 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 0.4 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.4 }}
+                  className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
+                  alt="Achievement"
+                />
               </AnimatePresence>
               
-              <button 
-                onClick={() => onImageClick(achievements[activeIndex].image)}
-                className="absolute bottom-8 right-8 z-20 bg-white/10 backdrop-blur-md p-4 rounded-full text-white hover:bg-[#F27D26] transition-all"
-              >
-                <Trophy className="w-6 h-6" />
-              </button>
-            </div>
+              <div className="absolute inset-0 bg-gradient-to-t from-[#151619] via-transparent to-transparent" />
+
+              {/* Text Content inside Card */}
+              <div className="relative h-full flex flex-col justify-center items-center text-center p-12 text-white">
+                {/* Large Background Number */}
+                <span className="absolute text-[12rem] font-black opacity-10 select-none pointer-events-none">
+                  {current?.number}
+                </span>
+                
+                <div className="z-10 relative">
+                  <p className="text-brand-orange font-bold tracking-[0.3em] text-xs uppercase mb-4">
+                    {current?.label || 'AWARD'}
+                  </p>
+                  <h4 className="text-4xl font-black uppercase tracking-tighter leading-none mb-6">
+                    {current?.title}
+                  </h4>
+                  <p className="text-slate-300 text-sm leading-relaxed max-w-xs mx-auto">
+                    {current?.description}
+                  </p>
+                </div>
+                
+                <div className="absolute bottom-10 bg-white/10 p-4 rounded-full border border-white/10 group-hover:bg-brand-orange group-hover:scale-110 transition-all">
+                   <Trophy className="w-6 h-6 text-brand-orange group-hover:text-white" />
+                </div>
+              </div>
+            </motion.div>
           </div>
 
-          {/* Right Side: Menu List */}
+          {/* RIGHT SIDE: INTERACTIVE LIST */}
           <div className="lg:w-1/2 w-full">
             <div className="mb-12">
-              <span className="text-[#F27D26] font-bold tracking-[0.2em] text-xs uppercase mb-3 block">Hall of Fame</span>
-              <h2 className="text-5xl font-black text-[#151619] uppercase tracking-tighter">Achievements</h2>
+              <span className="text-brand-orange font-bold tracking-widest text-xs uppercase mb-2 block">Hall of Fame</span>
+              <h2 className="text-5xl font-black text-brand-navy uppercase tracking-tighter">Achievements</h2>
             </div>
             
-            <div className="relative space-y-8">
-              {/* Connecting Line */}
-              <div className="absolute left-0 top-0 bottom-0 w-px bg-slate-200 hidden md:block">
-                <motion.div 
-                  animate={{ top: `${activeIndex * 88 + 12}px` }}
-                  className="absolute left-[-2px] w-1.5 h-6 bg-[#F27D26] rounded-full transition-all duration-500"
-                />
-              </div>
-
-              {achievements.map((item, idx) => (
-                <motion.div
-                  key={idx}
-                  onMouseEnter={() => setActiveIndex(idx)}
-                  onClick={() => setActiveIndex(idx)}
-                  className={`relative pl-8 cursor-pointer group transition-all duration-300 ${activeIndex === idx ? 'opacity-100' : 'opacity-40 hover:opacity-70'}`}
-                >
-                  <div className="flex items-center gap-6">
-                    <span className="text-xs font-bold text-slate-400 font-mono tracking-widest">
-                      {item.number}
-                    </span>
-                    <h3 className={`text-2xl md:text-3xl font-black uppercase tracking-tighter transition-all ${activeIndex === idx ? 'text-[#151619] translate-x-2' : 'text-slate-400'}`}>
+            <div className="space-y-6">
+              {data.map((item: any, idx: number) => (
+                <div key={idx} className="group">
+                  <button
+                    onMouseEnter={() => {
+                      setActiveIndex(idx);
+                      setHoveredSubLinkImage(null);
+                    }}
+                    className={`flex items-center gap-6 w-full text-left transition-all duration-300 ${activeIndex === idx ? 'opacity-100 translate-x-2' : 'opacity-30 hover:opacity-60'}`}
+                  >
+                    <span className="text-sm font-mono font-bold text-slate-400">0{idx + 1}</span>
+                    <h3 className={`text-2xl md:text-3xl font-black uppercase tracking-tighter ${activeIndex === idx ? 'text-brand-navy' : 'text-slate-500'}`}>
                       {item.title}
                     </h3>
-                  </div>
-                  
-                  {activeIndex === idx && (
-                    <motion.div 
-                      layoutId="activeLine"
-                      className="absolute left-[-40px] right-full h-px bg-[#F27D26] hidden md:block"
-                      initial={{ width: 0 }}
-                      animate={{ width: '40px' }}
-                    />
-                  )}
-                </motion.div>
+                  </button>
+
+                  {/* Revealed Sub-links (only for active item) */}
+                  <AnimatePresence>
+                    {activeIndex === idx && item.subLinks?.length > 0 && (
+                      <motion.div 
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="pl-14 mt-4 space-y-3 overflow-hidden"
+                      >
+                        {item.subLinks.map((sub: any, sIdx: number) => (
+                          <div 
+                            key={sIdx}
+                            onMouseEnter={() => setHoveredSubLinkImage(sub.image)}
+                            onMouseLeave={() => setHoveredSubLinkImage(null)}
+                            className="flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-brand-orange cursor-pointer transition-colors group/sub"
+                          >
+                            <ChevronRight className={`w-3 h-3 transition-transform ${hoveredSubLinkImage === sub.image ? 'translate-x-1 text-brand-orange' : ''}`} />
+                            {sub.name}
+                          </div>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               ))}
             </div>
-            
-            <div className="mt-16 pt-12 border-t border-slate-200">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-[#F27D26]/10 flex items-center justify-center text-[#F27D26]">
-                  <Award className="w-6 h-6" />
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Next Goal</p>
-                  <p className="text-[#151619] font-bold">National Level Championship 2026</p>
-                </div>
-              </div>
-            </div>
           </div>
+
         </div>
       </div>
     </section>
   );
 };
-
 
 const Gallery = ({ onImageClick }: { onImageClick: (url: string) => void }) => {
   const [filter, setFilter] = useState('All');
@@ -1100,6 +1047,12 @@ const Gallery = ({ onImageClick }: { onImageClick: (url: string) => void }) => {
 };
 
 const ExpertGuidance = () => {
+  const content = useContent();
+  
+  // These are the 4 stats for the boxes (100+, 50+, etc.)
+  // We use contentData.achievements as a fallback to ensure icons show up
+  const stats = content.achievements || contentData.achievements;
+
   return (
     <section id="about" className="section-padding bg-slate-50">
       <div className="max-w-7xl mx-auto">
@@ -1107,15 +1060,14 @@ const ExpertGuidance = () => {
         <motion.div 
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 0.8, delay: 0, ease: [0.21, 0.47, 0.32, 0.98] }}
+          viewport={{ once: true }}
           className="grid lg:grid-cols-2 gap-12 items-center mb-20"
         >
           <div>
             <span className="text-brand-orange font-bold tracking-[0.2em] text-xs uppercase mb-3 block">Welcome to our academy</span>
-            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-brand-navy mb-6 leading-tight uppercase">Where Passion Meets Performance</h2>
+            <h2 className="text-3xl sm:text-5xl lg:text-6xl font-black text-brand-navy mb-6 leading-tight uppercase">Where Passion Meets Performance</h2>
             <p className="text-slate-600 text-lg leading-relaxed mb-8 max-w-xl">
-              With over 2 years of experience, we have successfully trained and guided students to achieve excellence in both sports and arts. Our academy is proud to have 50+ active students and has achieved remarkable success with 100+ medals and certificates in various competitions.
+              With over 2 years of experience, we have successfully trained and guided students to achieve excellence in both sports and arts. Our academy is proud to have 50+ active students and 100+ medals.
             </p>
             
             <div className="grid sm:grid-cols-2 gap-8">
@@ -1124,32 +1076,21 @@ const ExpertGuidance = () => {
                   <Target className="w-5 h-5 text-brand-orange" />
                   Our Mission
                 </h4>
-                <p className="text-slate-500 text-sm leading-relaxed">To build confidence, discipline, and excellence in every student by providing high-quality training in sports and arts.</p>
+                <p className="text-slate-500 text-sm leading-relaxed">To build confidence and discipline in every student by providing high-quality training.</p>
               </div>
               <div className="space-y-3">
                 <h4 className="text-brand-navy font-bold flex items-center gap-2">
                   <Zap className="w-5 h-5 text-brand-orange" />
                   Why Choose Us
                 </h4>
-                <ul className="text-slate-500 text-sm space-y-1 leading-relaxed">
-                  <li>• Experienced and dedicated trainers</li>
-                  <li>• Focus on fitness & skill development</li>
-                  <li>• Proven track record with 100+ achievements</li>
-                  <li>• Friendly and motivating environment</li>
-                  <li>• Suitable for all age groups</li>
-                </ul>
+                <p className="text-slate-500 text-sm leading-relaxed">Focus on fitness, skill development, and a proven track record of success.</p>
               </div>
             </div>
           </div>
           
           <div className="relative">
             <div className="aspect-square rounded-[2.5rem] overflow-hidden shadow-2xl">
-              <img 
-                src="images/phsic.png" 
-                alt="Academy Training" 
-                className="w-full h-full object-cover"
-                referrerPolicy="no-referrer"
-              />
+              <img src="images/phsic.png" alt="Training" className="w-full h-full object-cover" />
             </div>
             <div className="absolute -bottom-8 -right-8 bg-brand-orange p-8 rounded-2xl shadow-2xl text-white">
               <div className="text-4xl font-black mb-1">2+</div>
@@ -1161,41 +1102,47 @@ const ExpertGuidance = () => {
         {/* Mentors Header */}
         <motion.div className="text-center mb-16">
           <h2 className="text-xs uppercase tracking-[0.2em] text-brand-orange font-bold mb-4">The Mentors</h2>
-          <h3 className="text-4xl md:text-5xl text-brand-navy">Expert Guidance</h3>
+          <h3 className="text-4xl md:text-5xl font-black text-brand-navy uppercase">Expert Guidance</h3>
         </motion.div>
 
-        {/* Updated Coach Grid: Now 2 columns and centered */}
-        <div className="grid md:grid-cols-2 gap-12 max-w-4xl mx-auto">
-          {COACHES.slice(0, 2).map((coach, idx) => (
-            <motion.div 
-              key={coach.name} 
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: idx * 0.2 }}
-              className="text-center group"
-            >
+        {/* Coach Grid */}
+        <div className="grid md:grid-cols-2 gap-12 max-w-4xl mx-auto mb-24">
+          {content.coaches?.slice(0, 2).map((coach, idx) => (
+            <motion.div key={idx} className="text-center group">
               <div className="relative mb-6 inline-block">
                 <div className="w-48 h-48 md:w-56 md:h-56 rounded-full overflow-hidden border-4 border-white shadow-xl mx-auto relative z-10">
                   <img src={coach.image} alt={coach.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
                 </div>
-                <div className="absolute top-0 right-0 w-12 h-12 bg-brand-orange rounded-full -z-0 translate-x-2 -translate-y-2 flex items-center justify-center text-white shadow-lg">
+                <div className="absolute top-0 right-0 w-12 h-12 bg-brand-orange rounded-full z-20 translate-x-2 -translate-y-2 flex items-center justify-center text-white shadow-lg">
                   <Star className="w-5 h-5 fill-current" />
                 </div>
               </div>
               <h4 className="text-xl font-bold text-brand-navy mb-1 group-hover:text-brand-orange transition-colors">{coach.name}</h4>
-              <p className="text-brand-orange font-bold text-[10px] uppercase tracking-[0.2em] mb-4">{coach.role}</p>
+              <p className="text-brand-orange font-bold text-[10px] uppercase tracking-[0.2em]">{coach.role}</p>
             </motion.div>
           ))}
         </div>
 
-        {/* Stats Section */}
-        <div className="mt-24 grid grid-cols-2 lg:grid-cols-4 gap-8">
-          {ACHIEVEMENTS.map((stat, idx) => (
-            <motion.div key={idx} className="text-center p-8 bg-white rounded-3xl shadow-sm border border-slate-100">
-              <div className="flex justify-center mb-4">{getIcon(stat.icon)}</div>
-              <div className="text-4xl font-bold text-brand-navy mb-1">{stat.value}</div>
-              <div className="text-slate-500 text-sm font-medium uppercase tracking-wider">{stat.label}</div>
+        {/* STATS SECTION (The 4 Clean White Boxes) */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
+          {stats?.map((stat, idx) => (
+            <motion.div 
+              key={idx}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: idx * 0.1 }}
+              className="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 text-center flex flex-col items-center justify-center hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+            >
+              <div className="mb-4 bg-orange-50 p-3 rounded-2xl">
+                {getIcon(stat.icon)}
+              </div>
+              <div className="text-4xl md:text-5xl font-black text-brand-navy mb-2 tracking-tight">
+                {stat.value}
+              </div>
+              <div className="text-slate-400 text-[10px] md:text-xs font-bold uppercase tracking-[0.2em] leading-tight">
+                {stat.label}
+              </div>
             </motion.div>
           ))}
         </div>

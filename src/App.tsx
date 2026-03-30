@@ -1471,22 +1471,24 @@ export default function App() {
         },
         body: JSON.stringify(newContent),
       });
+      
+      const result = await response.json();
+      
       if (response.ok) {
-        const result = await response.json();
         setContent(newContent);
         setIsEditing(false);
         console.log('Content saved successfully', {
           version: result.version,
           lastUpdatedAt: result.lastUpdatedAt
         });
-        // Optional: Show success toast/notification
-        alert(`Content updated successfully! (Version: ${result.version})`);
+        alert(`✅ Content updated successfully! (Version: ${result.version})`);
       } else {
-        throw new Error('Failed to save content');
+        console.error('Server error:', result);
+        throw new Error(result.error || 'Failed to save content');
       }
     } catch (error) {
       console.error('Error saving content:', error);
-      alert('Failed to save content. Please try again.');
+      alert(`❌ Failed to save content: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 

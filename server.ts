@@ -40,24 +40,33 @@ async function startServer() {
       // Try to fetch from MongoDB first
       let content = await Content.findOne({});
       
-      if (!content) {
-        // Fallback: Load from JSON file and save to MongoDB
-        try {
-          const data = await fs.readFile(CONTENT_FILE, 'utf-8');
-          const parsedData = JSON.parse(data);
-          content = new Content(parsedData);
-          await content.save();
-          console.log('Content synced from JSON file to MongoDB');
-        } catch (err) {
-          console.error('Error reading content file or syncing to MongoDB:', err);
-          return res.status(500).json({ error: 'Failed to read content' });
-        }
+      if (content) {
+        return res.json(content.toObject());
       }
       
-      res.json(content.toObject());
+      // Fallback: Load from JSON file and save to MongoDB
+      try {
+        const data = await fs.readFile(CONTENT_FILE, 'utf-8');
+        const parsedData = JSON.parse(data);
+        
+        // Create new document in MongoDB
+        content = new Content({
+          ...parsedData,
+          version: 1,
+          lastUpdatedAt: new Date(),
+          lastUpdatedBy: 'system-initial-sync'
+        });
+        await content.save();
+        console.log('Content synced from JSON file to MongoDB');
+        
+        return res.json(content.toObject());
+      } catch (err) {
+        console.error('Error reading content file or syncing to MongoDB:', err);
+        return res.status(500).json({ error: 'Failed to read content' });
+      }
     } catch (err) {
       console.error('Error fetching content:', err);
-      res.status(500).json({ error: 'Failed to fetch content' });
+      res.status(500).json({ error: 'Failed to fetch content', details: err.message });
     }
   });
 
@@ -71,25 +80,26 @@ async function startServer() {
       }
 
       // Update or create in MongoDB
-      let content = await Content.findOne({});
-      
-      if (content) {
-        // Update existing
-        Object.assign(content, newContent);
-        content.lastUpdatedAt = new Date();
-        content.lastUpdatedBy = req.headers['x-updated-by'] || 'admin';
-        content.version = (content.version || 1) + 1;
-        await content.save();
-      } else {
-        // Create new
-        content = new Content({
+      const updateData = {
+        ...newContent,
+        lastUpdatedAt: new Date(),
+        lastUpdatedBy: req.headers['x-updated-by'] || 'admin',
+        $inc: { version: 1 }
+      };
+
+      const content = await Content.findOneAndUpdate(
+        {},
+        {
           ...newContent,
           lastUpdatedAt: new Date(),
-          lastUpdatedBy: req.headers['x-updated-by'] || 'admin',
-          version: 1
-        });
-        await content.save();
-      }
+          lastUpdatedBy: req.headers['x-updated-by'] || 'admin'
+        },
+        { upsert: true, new: true }
+      );
+
+      // Increment version manually since $inc doesn't work well with findOneAndUpdate
+      content.version = (content.version || 0) + 1;
+      await content.save();
 
       // Also backup to JSON file for safety
       try {
@@ -103,13 +113,12 @@ async function startServer() {
       
       res.json({ 
         message: 'Content updated successfully',
-        data: content,
         version: content.version,
         lastUpdatedAt: content.lastUpdatedAt
       });
     } catch (err) {
       console.error('Error updating content:', err);
-      res.status(500).json({ error: 'Failed to update content' });
+      res.status(500).json({ error: 'Failed to update content', details: err.message });
     }
   });
 

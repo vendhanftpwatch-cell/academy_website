@@ -1102,7 +1102,7 @@ const ExpertGuidance = () => {
   const stats = content.achievements; // This looks for the 4 stats boxes
 
   return (
-    <section id="about" className="section-padding bg-slate-50">
+    <section id="stats" className="section-padding bg-slate-50">
       <div className="max-w-7xl mx-auto">
         {/* Welcome Section Hero Image part */}
         <div className="grid lg:grid-cols-2 gap-12 items-center mb-24">
@@ -1390,12 +1390,11 @@ return (
         {/* ADD THIS LINE HERE (Approx Line 866) */}
         <AchievementShowcase onImageClick={setSelectedImage} />
 		
-        <About />
-
         <FacilityRental />
         <Events />
         <Gallery onImageClick={setSelectedImage} />
         <ExpertGuidance />
+        <About />
         <JoinForm />
         <Footer onEdit={() => setIsEditing(true)} />
 

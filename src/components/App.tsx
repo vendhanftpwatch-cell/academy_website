@@ -1053,6 +1053,50 @@ const Gallery = ({ onImageClick }: { onImageClick: (url: string) => void }) => {
   );
 };
 
+const About = () => {
+  return (
+    <section id="about" className="section-padding bg-white">
+      <div className="max-w-7xl mx-auto">
+        <div className="grid lg:grid-cols-2 gap-12 items-center">
+          <div>
+            <span className="text-brand-orange font-bold tracking-[0.2em] text-xs uppercase mb-3 block">Welcome to our academy</span>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-brand-navy mb-6 leading-tight uppercase">Where Passion Meets Performance</h2>
+            <p className="text-slate-600 text-lg leading-relaxed mb-8 max-w-xl">
+              With over 2 years of experience, we have successfully trained and guided students to achieve excellence in both sports and arts. Our academy is proud to have 50+ active students and has achieved remarkable success with 100+ medals and certificates in various competitions.
+            </p>
+            
+            <div className="grid sm:grid-cols-2 gap-8">
+              <div className="space-y-3">
+                <h4 className="text-brand-navy font-bold flex items-center gap-2">
+                  <Target className="w-5 h-5 text-brand-orange" />
+                  Our Mission
+                </h4>
+                <p className="text-slate-500 text-sm leading-relaxed">To build confidence, discipline, and excellence in every student by providing high-quality training in sports and arts.</p>
+              </div>
+              <div className="space-y-3">
+                <h4 className="text-brand-navy font-bold flex items-center gap-2">
+                  <Zap className="w-5 h-5 text-brand-orange" />
+                  Why Choose Us
+                </h4>
+                <ul className="text-slate-500 text-sm space-y-1 leading-relaxed">
+                  <li>• Experienced and dedicated trainers</li>
+                  <li>• Focus on fitness & skill development</li>
+                  <li>• Proven track record with 100+ achievements</li>
+                  <li>• Friendly and motivating environment</li>
+                  <li>• Suitable for all age groups</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div className="aspect-square rounded-[2.5rem] overflow-hidden shadow-2xl">
+            <img src="images/phsic.png" alt="Academy" className="w-full h-full object-cover" />
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
 const ExpertGuidance = () => {
   const content = useContent();
   const stats = content.achievements; // This looks for the 4 stats boxes
@@ -1346,6 +1390,7 @@ return (
         {/* ADD THIS LINE HERE (Approx Line 866) */}
         <AchievementShowcase onImageClick={setSelectedImage} />
 		
+        <About />
 
         <FacilityRental />
         <Events />

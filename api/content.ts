@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import mongoose from 'mongoose';
+import contentData from '../content.json';
 
 // Define Content Schema inline for serverless compatibility
 const contentSchema = new mongoose.Schema(
@@ -54,18 +55,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(200).json(content.toObject());
       }
       
-      // Return default structure
-      const defaultContent = {
-        hero: { badge: '', title: '', subtitle: '', slides: [] },
-        programs: [],
-        events: [],
-        achievements: [],
-        coaches: [],
-        summer_camp: { features: [] },
-        version: 0
-      };
-      
-      return res.status(200).json(defaultContent);
+      // Return local content.json data when database is empty
+      return res.status(200).json(contentData);
     }
 
     if (req.method === 'POST') {

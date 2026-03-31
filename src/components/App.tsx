@@ -16,7 +16,9 @@ import contentData from '../content.json';
 const PROGRAMS = contentData.programs;
 const EVENTS = contentData.events;
 const COACHES = contentData.coaches;
-const ACHIEVEMENTS = contentData.achievements_list; 
+
+// Hall of Fame data (detailed achievements list)
+const HALL_OF_FAME_DATA = contentData.achievements_list;
 const SUMMER_CAMP_FEATURES = contentData.summer_camp?.features || [];
 
 // --- Types ---
@@ -50,6 +52,19 @@ interface Coach {
   image: string;
 }
 
+interface AchievementListItem {
+  title: string;
+  number: string;
+  label: string;
+  image: string;
+  description: string;
+  subLinks?: {
+    name: string;
+    image: string;
+    description: string;
+  }[];
+}
+
 interface Content {
   hero: {
     badge: string;
@@ -60,6 +75,7 @@ interface Content {
   programs: Program[];
   events: Event[];
   achievements: Achievement[];
+  achievements_list?: AchievementListItem[];
   coaches: Coach[];
   summer_camp: {
     features: {
@@ -102,46 +118,32 @@ const ContentContext = React.createContext<Content | null>(null);
 const useContent = () => {
   const context = React.useContext(ContentContext);
   
-  // If we have database data (from MongoDB)
-  if (context && context.hero) {
-    return {
-      ...contentData, // Backup from local file
-      ...context,     // Live data from database
-      // Ensure achievements_list is pulled from local if missing in database
-      achievements_list: context.achievements_list || contentData.achievements_list 
-    };
-  }
-  
-  return contentData; 
+  // Use DB data if available, otherwise local file
+  const data = (context && context.hero) ? context : contentData;
+
+  return {
+    ...data,
+    // THE HALL OF FAME LIST
+    achievements_list: data.achievements_list || [], 
+    
+    // THE 4 STATS BOXES
+    achievements: data.achievements || []
+  };
 };
+const isVideo = (url: string) => url?.toLowerCase().endsWith('.mp4') || url?.toLowerCase().endsWith('.webm');
 
 const Lightbox = ({ imageUrl, onClose }: { imageUrl: string, onClose: () => void }) => {
+  const isVid = isVideo(imageUrl);
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      onClick={onClose}
-      className="fixed inset-0 z-[150] bg-black/90 backdrop-blur-md flex items-center justify-center p-4 md:p-12 cursor-zoom-out"
-    >
-      <motion.button
-        initial={{ scale: 0 }}
-        animate={{ scale: 1 }}
-        className="absolute top-6 right-6 text-white bg-white/10 p-3 rounded-full hover:bg-white/20 transition-all"
-        onClick={onClose}
-      >
-        <X className="w-8 h-8" />
-      </motion.button>
-      
-      <motion.img
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.9, opacity: 0 }}
-        src={imageUrl}
-        alt="Full view"
-        className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
-        onClick={(e) => e.stopPropagation()} 
-      />
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="fixed inset-0 z-[150] bg-black/90 backdrop-blur-md flex items-center justify-center p-4 md:p-12 cursor-zoom-out">
+      <motion.button className="absolute top-6 right-6 text-white bg-white/10 p-3 rounded-full hover:bg-white/20 z-[160]" onClick={onClose}><X className="w-8 h-8" /></motion.button>
+      <div className="max-w-5xl w-full flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+        {isVid ? (
+          <video src={imageUrl} controls autoPlay className="max-w-full max-h-[85vh] rounded-lg shadow-2xl" />
+        ) : (
+          <motion.img initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} src={imageUrl} className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl" />
+        )}
+      </div>
     </motion.div>
   );
 };
@@ -620,15 +622,18 @@ const SummerCamp = ({ onImageClick }: { onImageClick: (url: string) => void }) =
           >
             <div className="grid grid-cols-2 gap-4">
               {campImages.map((src, index) => (
-                <motion.div 
-                  key={index}
-                  whileHover={{ scale: 1.05 }}
-                  onClick={() => onImageClick(src)}
-                  className={`aspect-square rounded-2xl overflow-hidden shadow-xl border-2 border-white/20 cursor-zoom-in ${index % 2 !== 0 ? 'mt-8' : ''}`}
-                >
-                  <img src={src} alt={`Summer Camp ${index + 1}`} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                </motion.div>
-              ))}
+             <motion.div 
+              key={index}
+              whileHover={{ scale: 1.05 }}
+              onClick={() => onImageClick(src)}
+              className={`aspect-square rounded-2xl overflow-hidden border-2 border-white/20 cursor-zoom-in ${index % 2 !== 0 ? 'mt-8' : ''}`}>
+              {isVideo(src) ? (
+              <video src={src} muted loop autoPlay className="w-full h-full object-cover" />
+              ) : (
+              <img src={src} className="w-full h-full object-cover" alt="Camp" />
+              )}
+            </motion.div>
+             ))}
             </div>
 
             <div className="absolute -bottom-4 -right-4 bg-white p-4 rounded-2xl shadow-2xl text-brand-navy hidden md:block z-20">
@@ -732,7 +737,7 @@ const FacilityRental = () => {
                 </div>
               </div>
             </div>
-                  <button className="mt-15 bg-white text-brand-navy px-9 py-4 text-2xl rounded-full font-bold ...">
+                  <button className="mt-15 bg-white text-brand-navy px-9 py-4 text-2xl rounded-full font-bold">
                    Coming Soon
                   </button>
           </motion.div>
@@ -761,7 +766,7 @@ const FacilityRental = () => {
                     </div>
                   ))}
                 </div>
-                <span className="text-xs font-bold"></span>
+                
               </div>
               <p className="text-[10px] text-slate-500">Join the community of elite athletes</p>
             </div>
@@ -848,89 +853,90 @@ const Events = () => {
 
 const AchievementShowcase = ({ onImageClick }: { onImageClick: (url: string) => void }) => {
   const [activeIndex, setActiveIndex] = useState(0);
-  const [hoveredSubLinkImage, setHoveredSubLinkImage] = useState<string | null>(null);
+  const [hoveredSubLink, setHoveredSubLink] = useState<any | null>(null);
   
-  // Use the smart hook to get data (Database data + Local backup)
   const content = useContent(); 
   const data = content.achievements_list || [];
 
-  // Safety Check: If there's no data at all, don't show the section
-  if (data.length === 0) return null;
-
   const current = data[activeIndex];
-  const displayImage = hoveredSubLinkImage || current?.image;
+  const displayImage = hoveredSubLink ? hoveredSubLink.image : current?.image;
+  const displayTitle = hoveredSubLink ? hoveredSubLink.name : current?.title;
+  const displayDescription = hoveredSubLink ? hoveredSubLink.description : current?.description;
+  const displayLabel = hoveredSubLink ? 'DETAIL' : (current?.label || 'AWARD');
 
   return (
     <section id="achievements" className="py-20 md:py-32 bg-slate-50 overflow-hidden">
       <div className="max-w-7xl mx-auto px-6">
+        <div className="mb-12">
+          <span className="text-brand-orange font-bold tracking-widest text-xs uppercase mb-2 block">Hall of Fame</span>
+          <h2 className="text-5xl font-black text-brand-navy uppercase tracking-tighter">Achievements</h2>
+        </div>
+        
+        {data.length === 0 ? (
+          <div className="text-center py-16">
+            <p className="text-slate-500 text-lg">No achievements available yet.</p>
+          </div>
+        ) : (
         <div className="flex flex-col lg:flex-row items-center gap-16 lg:gap-24">
           
-          {/* LEFT SIDE: FEATURED CARD */}
+          {/* LEFT SIDE: THE BIG PREVIEW CARD */}
           <div className="lg:w-1/2 w-full">
             <motion.div 
               key={activeIndex}
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="relative aspect-[4/5] w-full max-w-[450px] mx-auto rounded-[2rem] overflow-hidden shadow-2xl bg-[#151619] cursor-pointer group"
+              className="relative aspect-[4/5] w-full max-w-[450px] mx-auto rounded-[2rem] overflow-hidden shadow-2xl bg-[#151619] cursor-zoom-in group"
               onClick={() => onImageClick(displayImage)}
             >
-              {/* Image with Dark Overlay */}
+              {/* VIDEO OR IMAGE LOGIC (FIXED POSITION) */}
               <AnimatePresence mode="wait">
-                <motion.img 
-                  key={displayImage}
-                  src={displayImage} 
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 0.4 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.4 }}
-                  className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
-                  alt="Achievement"
-                />
+                {isVideo(displayImage) ? (
+                  <motion.video
+                    key={displayImage}
+                    src={displayImage}
+                    autoPlay muted loop playsInline
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 0.5 }}
+                    exit={{ opacity: 0 }}
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                ) : (
+                  <motion.img 
+                    key={displayImage}
+                    src={displayImage} 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 0.4 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.4 }}
+                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-all duration-700" 
+                    alt="Achievement Preview"
+                  />
+                )}
               </AnimatePresence>
               
               <div className="absolute inset-0 bg-gradient-to-t from-[#151619] via-transparent to-transparent" />
 
-              {/* Text Content inside Card */}
-              <div className="relative h-full flex flex-col justify-center items-center text-center p-12 text-white">
-                {/* Large Background Number */}
-                <span className="absolute text-[12rem] font-black opacity-10 select-none pointer-events-none">
-                  {current?.number}
-                </span>
-                
+              <div className="relative h-full flex flex-col justify-center items-center text-center p-12 text-white pointer-events-none">
+                <span className="absolute text-[12rem] font-black opacity-10 select-none">{current?.number}</span>
                 <div className="z-10 relative">
-                  <p className="text-brand-orange font-bold tracking-[0.3em] text-xs uppercase mb-4">
-                    {current?.label || 'AWARD'}
-                  </p>
-                  <h4 className="text-4xl font-black uppercase tracking-tighter leading-none mb-6">
-                    {current?.title}
-                  </h4>
-                  <p className="text-slate-300 text-sm leading-relaxed max-w-xs mx-auto">
-                    {current?.description}
-                  </p>
+                  <p className="text-brand-orange font-bold tracking-[0.3em] text-xs uppercase mb-4">{displayLabel}</p>
+                  <h4 className="text-2xl md:text-3xl font-black uppercase tracking-tighter leading-tight mb-6">{displayTitle}</h4>
+                  <p className="text-slate-300 text-sm leading-relaxed max-w-xs mx-auto line-clamp-4">{displayDescription}</p>
                 </div>
-                
-                <div className="absolute bottom-10 bg-white/10 p-4 rounded-full border border-white/10 group-hover:bg-brand-orange group-hover:scale-110 transition-all">
+                <div className="absolute bottom-10 bg-white/10 p-4 rounded-full border border-white/10 group-hover:bg-brand-orange transition-all">
                    <Trophy className="w-6 h-6 text-brand-orange group-hover:text-white" />
                 </div>
               </div>
             </motion.div>
           </div>
 
-          {/* RIGHT SIDE: INTERACTIVE LIST */}
+          {/* RIGHT SIDE: THE LIST OF TITLES */}
           <div className="lg:w-1/2 w-full">
-            <div className="mb-12">
-              <span className="text-brand-orange font-bold tracking-widest text-xs uppercase mb-2 block">Hall of Fame</span>
-              <h2 className="text-5xl font-black text-brand-navy uppercase tracking-tighter">Achievements</h2>
-            </div>
-            
             <div className="space-y-6">
               {data.map((item: any, idx: number) => (
                 <div key={idx} className="group">
                   <button
-                    onMouseEnter={() => {
-                      setActiveIndex(idx);
-                      setHoveredSubLinkImage(null);
-                    }}
+                    onMouseEnter={() => { setActiveIndex(idx); setHoveredSubLink(null); }}
                     className={`flex items-center gap-6 w-full text-left transition-all duration-300 ${activeIndex === idx ? 'opacity-100 translate-x-2' : 'opacity-30 hover:opacity-60'}`}
                   >
                     <span className="text-sm font-mono font-bold text-slate-400">0{idx + 1}</span>
@@ -939,7 +945,6 @@ const AchievementShowcase = ({ onImageClick }: { onImageClick: (url: string) => 
                     </h3>
                   </button>
 
-                  {/* Revealed Sub-links (only for active item) */}
                   <AnimatePresence>
                     {activeIndex === idx && item.subLinks?.length > 0 && (
                       <motion.div 
@@ -951,11 +956,12 @@ const AchievementShowcase = ({ onImageClick }: { onImageClick: (url: string) => 
                         {item.subLinks.map((sub: any, sIdx: number) => (
                           <div 
                             key={sIdx}
-                            onMouseEnter={() => setHoveredSubLinkImage(sub.image)}
-                            onMouseLeave={() => setHoveredSubLinkImage(null)}
-                            className="flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-brand-orange cursor-pointer transition-colors group/sub"
+                            onMouseEnter={() => setHoveredSubLink(sub)}
+                            onMouseLeave={() => setHoveredSubLink(null)}
+                            onClick={(e) => { e.stopPropagation(); onImageClick(sub.image); }}
+                            className="flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-brand-orange cursor-zoom-in transition-colors group/sub"
                           >
-                            <ChevronRight className={`w-3 h-3 transition-transform ${hoveredSubLinkImage === sub.image ? 'translate-x-1 text-brand-orange' : ''}`} />
+                            <ChevronRight className={`w-3 h-3 transition-transform ${hoveredSubLink?.name === sub.name ? 'translate-x-1 text-brand-orange' : ''}`} />
                             {sub.name}
                           </div>
                         ))}
@@ -968,6 +974,7 @@ const AchievementShowcase = ({ onImageClick }: { onImageClick: (url: string) => 
           </div>
 
         </div>
+        )}
       </div>
     </section>
   );
@@ -1048,99 +1055,38 @@ const Gallery = ({ onImageClick }: { onImageClick: (url: string) => void }) => {
 
 const ExpertGuidance = () => {
   const content = useContent();
-  
-  // These are the 4 stats for the boxes (100+, 50+, etc.)
-  // We use contentData.achievements as a fallback to ensure icons show up
-  const stats = content.achievements || contentData.achievements;
+  const stats = content.achievements; // This looks for the 4 stats boxes
 
   return (
     <section id="about" className="section-padding bg-slate-50">
       <div className="max-w-7xl mx-auto">
-        {/* Welcome Section */}
-        <motion.div 
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="grid lg:grid-cols-2 gap-12 items-center mb-20"
-        >
+        {/* Welcome Section Hero Image part */}
+        <div className="grid lg:grid-cols-2 gap-12 items-center mb-24">
           <div>
-            <span className="text-brand-orange font-bold tracking-[0.2em] text-xs uppercase mb-3 block">Welcome to our academy</span>
-            <h2 className="text-3xl sm:text-5xl lg:text-6xl font-black text-brand-navy mb-6 leading-tight uppercase">Where Passion Meets Performance</h2>
-            <p className="text-slate-600 text-lg leading-relaxed mb-8 max-w-xl">
-              With over 2 years of experience, we have successfully trained and guided students to achieve excellence in both sports and arts. Our academy is proud to have 50+ active students and 100+ medals.
-            </p>
-            
-            <div className="grid sm:grid-cols-2 gap-8">
-              <div className="space-y-3">
-                <h4 className="text-brand-navy font-bold flex items-center gap-2">
-                  <Target className="w-5 h-5 text-brand-orange" />
-                  Our Mission
-                </h4>
-                <p className="text-slate-500 text-sm leading-relaxed">To build confidence and discipline in every student by providing high-quality training.</p>
-              </div>
-              <div className="space-y-3">
-                <h4 className="text-brand-navy font-bold flex items-center gap-2">
-                  <Zap className="w-5 h-5 text-brand-orange" />
-                  Why Choose Us
-                </h4>
-                <p className="text-slate-500 text-sm leading-relaxed">Focus on fitness, skill development, and a proven track record of success.</p>
-              </div>
-            </div>
+            <h2 className="text-5xl font-black text-brand-navy mb-6 uppercase">Passion Meets Performance</h2>
+            <p className="text-slate-600 text-lg mb-8 leading-relaxed">Over 2 years of experience guiding students to excellence in sports and arts.</p>
           </div>
-          
-          <div className="relative">
-            <div className="aspect-square rounded-[2.5rem] overflow-hidden shadow-2xl">
-              <img src="images/phsic.png" alt="Training" className="w-full h-full object-cover" />
-            </div>
-            <div className="absolute -bottom-8 -right-8 bg-brand-orange p-8 rounded-2xl shadow-2xl text-white">
-              <div className="text-4xl font-black mb-1">2+</div>
-              <div className="text-[10px] uppercase tracking-widest font-bold">Years of Excellence</div>
-            </div>
+          <div className="aspect-square rounded-[2.5rem] overflow-hidden shadow-2xl">
+            <img src="images/phsic.png" alt="Academy" className="w-full h-full object-cover" />
           </div>
-        </motion.div>
-
-        {/* Mentors Header */}
-        <motion.div className="text-center mb-16">
-          <h2 className="text-xs uppercase tracking-[0.2em] text-brand-orange font-bold mb-4">The Mentors</h2>
-          <h3 className="text-4xl md:text-5xl font-black text-brand-navy uppercase">Expert Guidance</h3>
-        </motion.div>
-
-        {/* Coach Grid */}
-        <div className="grid md:grid-cols-2 gap-12 max-w-4xl mx-auto mb-24">
-          {content.coaches?.slice(0, 2).map((coach, idx) => (
-            <motion.div key={idx} className="text-center group">
-              <div className="relative mb-6 inline-block">
-                <div className="w-48 h-48 md:w-56 md:h-56 rounded-full overflow-hidden border-4 border-white shadow-xl mx-auto relative z-10">
-                  <img src={coach.image} alt={coach.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
-                </div>
-                <div className="absolute top-0 right-0 w-12 h-12 bg-brand-orange rounded-full z-20 translate-x-2 -translate-y-2 flex items-center justify-center text-white shadow-lg">
-                  <Star className="w-5 h-5 fill-current" />
-                </div>
-              </div>
-              <h4 className="text-xl font-bold text-brand-navy mb-1 group-hover:text-brand-orange transition-colors">{coach.name}</h4>
-              <p className="text-brand-orange font-bold text-[10px] uppercase tracking-[0.2em]">{coach.role}</p>
-            </motion.div>
-          ))}
         </div>
 
-        {/* STATS SECTION (The 4 Clean White Boxes) */}
+        {/* Stats Boxes (The 4 white boxes) */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
-          {stats?.map((stat, idx) => (
+          {stats?.map((stat: any, idx: number) => (
             <motion.div 
               key={idx}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: idx * 0.1 }}
-              className="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 text-center flex flex-col items-center justify-center hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+              className="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 text-center flex flex-col items-center justify-center hover:shadow-xl transition-all"
             >
               <div className="mb-4 bg-orange-50 p-3 rounded-2xl">
                 {getIcon(stat.icon)}
               </div>
-              <div className="text-4xl md:text-5xl font-black text-brand-navy mb-2 tracking-tight">
+              <div className="text-4xl md:text-5xl font-black text-brand-navy mb-2">
                 {stat.value}
               </div>
-              <div className="text-slate-400 text-[10px] md:text-xs font-bold uppercase tracking-[0.2em] leading-tight">
+              <div className="text-slate-400 text-[10px] font-bold uppercase tracking-widest">
                 {stat.label}
               </div>
             </motion.div>
@@ -1335,7 +1281,10 @@ export default function App() {
         const response = await fetch('/api/content');
         if (response.ok) {
           const data = await response.json();
-          setContent(data);
+          // Only update state if API returns valid data with achievements_list
+          if (data && data.achievements_list && data.achievements_list.length > 0) {
+            setContent(data);
+          }
         }
       } catch (error) {
         console.error('Failed to fetch content:', error);

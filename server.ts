@@ -41,7 +41,12 @@ async function startServer() {
       let content = await Content.findOne({});
       
       if (content) {
-        return res.json(content.toObject());
+        const contentObj = content.toObject();
+        // Ensure achievements_list is included
+        if (!contentObj.achievements_list) {
+          contentObj.achievements_list = [];
+        }
+        return res.json(contentObj);
       }
       
       // Fallback: Load from JSON file and save to MongoDB
@@ -59,7 +64,12 @@ async function startServer() {
         await content.save();
         console.log('Content synced from JSON file to MongoDB');
         
-        return res.json(content.toObject());
+        const contentObj = content.toObject();
+        // Ensure achievements_list is included
+        if (!contentObj.achievements_list) {
+          contentObj.achievements_list = [];
+        }
+        return res.json(contentObj);
       } catch (err) {
         console.error('Error reading content file or syncing to MongoDB:', err);
         return res.status(500).json({ error: 'Failed to read content' });
@@ -90,6 +100,7 @@ async function startServer() {
           content.programs = newContent.programs || content.programs;
           content.events = newContent.events || content.events;
           content.achievements = newContent.achievements || content.achievements;
+          content.achievements_list = newContent.achievements_list || content.achievements_list;
           content.coaches = newContent.coaches || content.coaches;
           content.summer_camp = newContent.summer_camp || content.summer_camp;
           content.lastUpdatedAt = new Date();

@@ -1121,7 +1121,7 @@ const ExpertGuidance = () => {
                   className="flex flex-col items-center text-center"
                 >
                   <div className="w-48 h-48 rounded-full overflow-hidden mb-6 border-4 border-brand-orange/20">
-                    <img src={coach.image} alt={coach.name} className="w-full h-full object-cover" />
+                    <img src={coach.image} alt={coach.name} className="w-full h-full object-cover" loading="lazy" />
                   </div>
                   <h3 className="text-2xl font-black text-brand-navy mb-2 uppercase">{coach.name}</h3>
                   <p className="text-slate-500 text-sm leading-relaxed">{coach.role}</p>

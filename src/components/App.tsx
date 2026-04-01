@@ -1100,37 +1100,53 @@ const About = () => {
 const ExpertGuidance = () => {
   const content = useContent();
   const stats = content.achievements; // This looks for the 4 stats boxes
+  const coaches = content.coaches || []; // Get coaches data
 
   return (
     <section id="stats" className="section-padding bg-slate-50">
       <div className="max-w-7xl mx-auto">
-        {/* Welcome Section Hero Image part */}
-        <div className="grid lg:grid-cols-2 gap-12 items-center mb-24">
+        {/* Expert Guidance / Coaches Section */}
+        {coaches.length > 0 && (
           <div>
-            <h2 className="text-5xl font-black text-brand-navy mb-6 uppercase">Passion Meets Performance</h2>
-            <p className="text-slate-600 text-lg mb-8 leading-relaxed">Over 2 years of experience guiding students to excellence in sports and arts.</p>
+            <div className="mb-12">
+              <span className="text-brand-orange font-bold tracking-widest text-xs uppercase mb-2 block">Meet Our Masters</span>
+              <h2 className="text-5xl font-black text-brand-navy uppercase tracking-tighter">Expert Guidance</h2>
+            </div>
+            <div className="grid md:grid-cols-2 gap-8">
+              {coaches.map((coach: any, idx: number) => (
+                <motion.div
+                  key={idx}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  className="flex flex-col items-center text-center"
+                >
+                  <div className="w-48 h-48 rounded-full overflow-hidden mb-6 border-4 border-brand-orange/20">
+                    <img src={coach.image} alt={coach.name} className="w-full h-full object-cover" />
+                  </div>
+                  <h3 className="text-2xl font-black text-brand-navy mb-2 uppercase">{coach.name}</h3>
+                  <p className="text-slate-500 text-sm leading-relaxed">{coach.role}</p>
+                </motion.div>
+              ))}
+            </div>
           </div>
-          <div className="aspect-square rounded-[2.5rem] overflow-hidden shadow-2xl">
-            <img src="images/phsic.png" alt="Academy" className="w-full h-full object-cover" />
-          </div>
-        </div>
+        )}
 
         {/* Stats Boxes (The 4 white boxes) */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-24">
           {stats?.map((stat: any, idx: number) => (
             <motion.div 
               key={idx}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
-              className="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 text-center flex flex-col items-center justify-center hover:shadow-xl transition-all"
+              className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 text-center flex flex-col items-center justify-center hover:shadow-xl transition-all"
             >
-              <div className="mb-4 bg-orange-50 p-3 rounded-2xl">
+              <div className="mb-3 bg-orange-50 p-2 rounded-xl">
                 {getIcon(stat.icon)}
               </div>
-              <div className="text-4xl md:text-5xl font-black text-brand-navy mb-2">
+              <div className="text-3xl md:text-4xl font-black text-brand-navy mb-1">
                 {stat.value}
               </div>
-              <div className="text-slate-400 text-[10px] font-bold uppercase tracking-widest">
+              <div className="text-slate-400 text-[9px] font-bold uppercase tracking-widest">
                 {stat.label}
               </div>
             </motion.div>

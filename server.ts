@@ -6,8 +6,6 @@ import cors from 'cors';
 import path from 'path';
 import fs from 'fs/promises';
 import { fileURLToPath } from 'url';
-import { Application } from './src/models/Application.js';
-import { Content } from './src/models/Content.js';
 import nodemailer from 'nodemailer';
 
 dotenv.config();
@@ -16,224 +14,135 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const CONTENT_FILE = path.join(process.cwd(), 'content.json');
 
+// --- MongoDB Schemas (Defined here for stability) ---
+const applicationSchema = new mongoose.Schema({
+  fullName: { type: String, required: true },
+  email: { type: String },
+  phone: { type: String, required: true },
+  place: { type: String, required: true },
+  schoolName: { type: String, required: true },
+  program: { type: String, required: true },
+  status: { type: String, default: 'pending' },
+  createdAt: { type: Date, default: Date.now }
+});
+
+const Application = mongoose.models.Application || mongoose.model('Application', applicationSchema);
+
+const contentSchema = new mongoose.Schema({
+  hero: Object,
+  programs: Array,
+  events: Array,
+  achievements: Array,
+  achievements_list: Array,
+  coaches: Array,
+  summer_camp: Object,
+  version: { type: Number, default: 1 },
+  lastUpdatedAt: { type: Date, default: Date.now },
+  lastUpdatedBy: String
+});
+
+const Content = mongoose.models.Content || mongoose.model('Content', contentSchema);
+
 async function startServer() {
   const app = express();
   const PORT = Number(process.env.PORT) || 3000;
 
   // Middleware
   app.use(cors());
-  app.use(express.json({ limit: '10mb' }));
+  app.use(express.json({ limit: '15mb' })); // Increased limit for large content saves
 
   // MongoDB Connection
   const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://vendhaninfotechodc_db_user:vendhan12345@cluster0.npltaji.mongodb.net/?appName=Cluster0';
   
   try {
     await mongoose.connect(MONGODB_URI);
-    console.log('Connected to MongoDB');
+    console.log('✅ Connected to MongoDB');
   } catch (err) {
-    console.error('MongoDB connection error:', err);
+    console.error('❌ MongoDB connection error:', err);
   }
 
-  // Content Management API
+  // --- API ROUTES ---
+
+  // 1. Get All Content (For the website and editor)
   app.get('/api/content', async (req, res) => {
     try {
-      // Try to fetch from MongoDB first
       let content = await Content.findOne({});
-      
-      if (content) {
-        const contentObj = content.toObject();
-        // Ensure achievements_list is included
-        if (!contentObj.achievements_list) {
-          contentObj.achievements_list = [];
-        }
-        return res.json(contentObj);
+      if (!content) {
+        const fileData = await fs.readFile(CONTENT_FILE, 'utf-8');
+        return res.json(JSON.parse(fileData));
       }
-      
-      // Fallback: Load from JSON file and save to MongoDB
-      try {
-        const data = await fs.readFile(CONTENT_FILE, 'utf-8');
-        const parsedData = JSON.parse(data);
-        
-        // Create new document in MongoDB
-        content = new Content({
-          ...parsedData,
-          version: 1,
-          lastUpdatedAt: new Date(),
-          lastUpdatedBy: 'system-initial-sync'
-        });
-        await content.save();
-        console.log('Content synced from JSON file to MongoDB');
-        
-        const contentObj = content.toObject();
-        // Ensure achievements_list is included
-        if (!contentObj.achievements_list) {
-          contentObj.achievements_list = [];
-        }
-        return res.json(contentObj);
-      } catch (err) {
-        console.error('Error reading content file or syncing to MongoDB:', err);
-        return res.status(500).json({ error: 'Failed to read content' });
-      }
+      res.json(content);
     } catch (err) {
-      console.error('Error fetching content:', err);
-      res.status(500).json({ error: 'Failed to fetch content', details: err.message });
+      res.status(500).json({ error: 'Failed to fetch content' });
     }
   });
 
+  // 2. Save Content (Fixes the "Non-JSON response" error)
   app.post('/api/content', async (req, res) => {
     try {
       const newContent = req.body;
-      
-      // Basic validation: ensure it's a valid object
-      if (typeof newContent !== 'object' || newContent === null) {
-        console.error('Invalid content format:', typeof newContent);
-        return res.status(400).json({ error: 'Invalid content format' });
-      }
-
-      // Update or create in MongoDB with proper error handling
-      try {
-        let content = await Content.findOne({});
-        
-        if (content) {
-          // Update existing document
-          content.hero = newContent.hero || content.hero;
-          content.programs = newContent.programs || content.programs;
-          content.events = newContent.events || content.events;
-          content.achievements = newContent.achievements || content.achievements;
-          content.achievements_list = newContent.achievements_list || content.achievements_list;
-          content.coaches = newContent.coaches || content.coaches;
-          content.summer_camp = newContent.summer_camp || content.summer_camp;
-          content.lastUpdatedAt = new Date();
-          content.lastUpdatedBy = req.headers['x-updated-by'] || 'admin';
-          content.version = (content.version || 0) + 1;
-          await content.save();
-          console.log('Content updated in MongoDB, version:', content.version);
-        } else {
-          // Create new document
-          content = new Content({
-            ...newContent,
-            lastUpdatedAt: new Date(),
-            lastUpdatedBy: req.headers['x-updated-by'] || 'admin',
-            version: 1
-          });
-          await content.save();
-          console.log('New content created in MongoDB, version:', content.version);
-        }
-
-        // Backup JSON file
-        try {
-          const currentData = await fs.readFile(CONTENT_FILE, 'utf-8');
-          await fs.writeFile(`${CONTENT_FILE}.bak`, currentData);
-          console.log('JSON backup created');
-        } catch (e) {
-          console.warn('Could not create backup:', e.message);
-        }
-
-        // Update JSON file
-        await fs.writeFile(CONTENT_FILE, JSON.stringify(newContent, null, 2));
-        console.log('JSON file updated');
-        
-        return res.status(200).json({ 
-          message: 'Content updated successfully',
-          version: content.version,
-          lastUpdatedAt: content.lastUpdatedAt,
-          lastUpdatedBy: content.lastUpdatedBy
-        });
-      } catch (mongoErr) {
-        console.error('MongoDB update error:', mongoErr.message, mongoErr.stack);
-        return res.status(500).json({ error: 'Database error: ' + mongoErr.message });
-      }
-    } catch (err) {
-      console.error('Error updating content:', err.message, err.stack);
-      return res.status(500).json({ error: 'Failed to update content: ' + err.message });
-    }
-  });
-
-  // Get content metadata (version, last update info)
-  const contentInfoHandler = async (req: any, res: any) => {
-    try {
-      const content = await Content.findOne({}, { hero: 0, programs: 0, events: 0, achievements: 0, coaches: 0, summer_camp: 0 });
-      if (!content) {
-        return res.json({ message: 'No content found', version: 0 });
-      }
-      res.json({
-        version: content.version,
-        lastUpdatedAt: content.lastUpdatedAt,
-        lastUpdatedBy: content.lastUpdatedBy
-      });
-    } catch (err) {
-      console.error('Error fetching content info:', err);
-      res.status(500).json({ error: 'Failed to fetch content info' });
-    }
-  };
-
-  app.get('/api/content/info', contentInfoHandler);
-  app.get('/api/content-info', contentInfoHandler);  // Alias for serverless compatibility
-
-  // Sync content from JSON file to MongoDB
-  app.post('/api/content/sync', async (req, res) => {
-    try {
-      const data = await fs.readFile(CONTENT_FILE, 'utf-8');
-      const parsedData = JSON.parse(data);
-      
       let content = await Content.findOne({});
+
       if (content) {
-        Object.assign(content, parsedData);
+        Object.assign(content, newContent);
+        content.version = (content.version || 0) + 1;
         content.lastUpdatedAt = new Date();
-        content.lastUpdatedBy = 'sync-from-file';
-        content.version = (content.version || 1) + 1;
+        content.lastUpdatedBy = req.headers['x-updated-by'] || 'admin';
         await content.save();
       } else {
-        content = new Content({
-          ...parsedData,
-          lastUpdatedAt: new Date(),
-          lastUpdatedBy: 'sync-from-file',
-          version: 1
-        });
+        content = new Content({ ...newContent, version: 1, lastUpdatedAt: new Date() });
         await content.save();
       }
+
+      // Update local file backup
+      await fs.writeFile(CONTENT_FILE, JSON.stringify(newContent, null, 2));
       
-      res.json({ 
-        message: 'Content synced successfully from JSON to MongoDB',
-        version: content.version
-      });
-    } catch (err) {
-      console.error('Error syncing content:', err);
-      res.status(500).json({ error: 'Failed to sync content' });
+      res.json({ message: 'Content saved successfully', version: content.version });
+    } catch (err: any) {
+      console.error('Error saving content:', err);
+      res.status(500).json({ error: 'Database Error: ' + err.message });
     }
   });
 
-  // API Routes
+  // 3. Metadata for Editor
+  app.get('/api/content-info', async (req, res) => {
+    try {
+      const content = await Content.findOne({});
+      res.json({
+        version: content?.version || 0,
+        lastUpdatedAt: content?.lastUpdatedAt || new Date(),
+        lastUpdatedBy: content?.lastUpdatedBy || 'system'
+      });
+    } catch (err) {
+      res.status(500).json({ error: 'Error' });
+    }
+  });
+
+  // 4. Enroll Student & Send Detailed Mail
   app.post('/api/applications', async (req, res) => {
     try {
-      const { fullName, email, phone, program } = req.body;
-      
-      const newApplication = new Application({
-        fullName,
-        email,
-        phone,
-        program
-      });
+      const { fullName, email, phone, place, schoolName, program } = req.body;
 
-      await newApplication.save();
+      if (!fullName || !phone || !place || !schoolName || !program) {
+        return res.status(400).json({ error: 'Missing required fields' });
+      }
 
-      // Send Email Notification (Optional but good practice)
+      // Save to DB
+      const newApp = new Application({ fullName, email, phone, place, schoolName, program });
+      await newApp.save();
+
+      // Send Email
       let emailSent = false;
-      let emailError = null;
-      
       if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
         try {
           const transporter = nodemailer.createTransport({
             service: 'gmail',
-            auth: {
-              user: process.env.EMAIL_USER,
-              pass: process.env.EMAIL_PASS
-            }
+            auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS }
           });
 
-          const mailOptions = {
+          await transporter.sendMail({
             from: process.env.EMAIL_USER,
-            to: process.env.EMAIL_USER, // Send to self for notification
+            to: process.env.EMAIL_USER,
             subject: '📩 New Student Enrollment Request',
             text: `Dear Team,
 
@@ -241,9 +150,10 @@ You have received a new enrollment request. Below are the applicant details:
 
 ━━━━━━━━━━━━━━━━━━━━━━━
 👤 Name: ${fullName}
+📍 Place: ${place}
+🏫 School Name: ${schoolName}
 📞 Contact Number: ${phone}
-📧 Email Address: ${email}
-
+📧 Email Address: ${email || 'Not provided'}
 🎯 Selected Program: ${program}
 ━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -251,51 +161,66 @@ Kindly follow up with the applicant at the earliest.
 
 Best Regards,
 Vendhan Sports Academy`
-          };
-
-          // IMPORTANT: Await the email sending to ensure it completes before response
-          await transporter.sendMail(mailOptions);
+          });
           emailSent = true;
-          console.log('Email sent successfully for application:', fullName);
-        } catch (emailErr) {
-          emailError = emailErr.message;
-          console.error('Email error:', emailErr);
+          console.log('✅ Enrollment email sent for:', fullName);
+        } catch (mailErr) {
+          console.error('❌ Mailer error:', mailErr);
         }
       }
 
-      res.status(201).json({ 
-        message: 'Application submitted successfully', 
-        data: newApplication,
-        emailStatus: emailSent ? 'sent' : (emailError ? `failed: ${emailError}` : 'not configured')
-      });
-    } catch (err) {
-      console.error('Application submission error:', err);
-      res.status(500).json({ error: 'Failed to submit application' });
+      res.status(201).json({ message: 'Application successful', emailSent });
+    } catch (err: any) {
+      console.error('❌ Application error:', err);
+      res.status(500).json({ error: err.message });
     }
   });
 
-  app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected' });
-  });
+  // Health/Dev Logic
+  app.get('/api/health', (req, res) => res.json({ status: 'ok', mongo: mongoose.connection.readyState }));
 
-  // Vite middleware for development
   if (process.env.NODE_ENV !== 'production') {
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: 'spa',
-    });
+    const vite = await createViteServer({ server: { middlewareMode: true }, appType: 'spa' });
     app.use(vite.middlewares);
   } else {
     const distPath = path.join(process.cwd(), 'dist');
     app.use(express.static(distPath));
-    app.get('*', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
-    });
+    app.get('*', (req, res) => res.sendFile(path.join(distPath, 'index.html')));
   }
 
   app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+    console.log(`🚀 Server listening on http://localhost:${PORT}`);
   });
 }
 
+// Start traditional server
 startServer();
+
+// --- VERCEL HANDLER (For Cloud Deployment) ---
+export default async function handler(req: any, res: any) {
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Only POST allowed' });
+  
+  try {
+    const { fullName, email, phone, place, schoolName, program } = req.body;
+    if (mongoose.connection.readyState !== 1) await mongoose.connect(process.env.MONGODB_URI || '');
+
+    const newApp = new Application({ fullName, email, phone, place, schoolName, program });
+    await newApp.save();
+
+    if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+      const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS }
+      });
+      await transporter.sendMail({
+        from: process.env.EMAIL_USER,
+        to: process.env.EMAIL_USER,
+        subject: '📩 New Enrollment Request',
+        text: `Name: ${fullName}\nPlace: ${place}\nSchool: ${schoolName}\nPhone: ${phone}\nProgram: ${program}`
+      });
+    }
+    return res.status(201).json({ message: 'Success' });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+}

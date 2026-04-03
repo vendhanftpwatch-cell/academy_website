@@ -290,7 +290,7 @@ const Navbar = () => {
         
         {/* Logo Section */}
         <div className="flex items-center gap-2">
-          <img src="images/logo.png" alt="Logo" className="w-12 h-12 md:w-16 md:h-16 object-contain" />
+          <img src="images/logo.png" alt="Logo" className="w-20 h-20 md:w-28 md:h-28 object-contain" />
           <div className={`flex flex-col leading-tight font-bold ${isScrolled ? 'text-brand-navy' : 'text-white'}`}>
             <span className="text-lg md:text-xl uppercase tracking-tighter">VENDHAN</span>
             <span className={`text-[10px] md:text-xs font-semibold ${isScrolled ? 'text-slate-500' : 'text-brand-orange'}`}>
@@ -711,7 +711,7 @@ const FacilityRental = () => {
             transition={{ duration: 1, ease: [0.21, 0.47, 0.32, 0.98] }}
           >
             <h2 className="text-xs uppercase tracking-[0.2em] text-brand-orange font-bold mb-3">Infrastructure</h2>
-            <h3 className="text-4xl md:text-5xl mb-6 leading-tight">Facility Rental</h3>
+            <h3 className="text-4xl md:text-5xl mb-6 leading-tight">Rental Facility</h3>
             <p className="text-slate-400 text-lg mb-10 leading-relaxed max-w-xl">
               We offer world-class sports infrastructure for rent, suitable for practice sessions, tournaments, and private events. Our facilities are maintained to international standards.
             </p>
@@ -1123,7 +1123,7 @@ const ExpertGuidance = () => {
                   <div className="w-48 h-48 rounded-full overflow-hidden mb-6 border-4 border-brand-orange/20">
                     <img src={coach.image} alt={coach.name} className="w-full h-full object-cover" loading="lazy" />
                   </div>
-                  <h3 className="text-2xl font-black text-brand-navy mb-2 uppercase">{coach.name}</h3>
+                   <h3 className="text-2xl font-black text-brand-navy mb-2">{coach.name}</h3>
                   <p className="text-slate-500 text-sm leading-relaxed">{coach.role}</p>
                 </motion.div>
               ))}
@@ -1162,6 +1162,8 @@ const JoinForm = () => {
     fullName: '',
     email: '',
     phone: '',
+    place: '',
+    schoolName: '',
     program: 'Silambam'
   });
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
@@ -1177,7 +1179,7 @@ const JoinForm = () => {
       });
       if (response.ok) {
         setStatus('success');
-        setFormData({ fullName: '', email: '', phone: '', program: 'Silambam' });
+        setFormData({ fullName: '', email: '', phone: '', place: '', schoolName: '', program: 'Silambam' });
       } else {
         setStatus('error');
       }
@@ -1205,18 +1207,44 @@ const JoinForm = () => {
                 <button onClick={() => setStatus('idle')} className="text-brand-orange font-bold">Submit another</button>
               </div>
             ) : (
-              <form className="space-y-4 sm:space-y-5" onSubmit={handleSubmit}>
+              <form className="space-y-4 sm:space-y-5" onSubmit={handleSubmit} noValidate>
                 <input type="text" required value={formData.fullName} onChange={(e) => setFormData({ ...formData, fullName: e.target.value })} className="w-full px-3 sm:px-5 py-2 sm:py-3 rounded-lg sm:rounded-xl bg-slate-50 border border-slate-200 text-sm sm:text-base" placeholder="Full Name" />
-                <input type="email" required value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="w-full px-3 sm:px-5 py-2 sm:py-3 rounded-lg sm:rounded-xl bg-slate-50 border border-slate-200 text-sm sm:text-base" placeholder="Email" />
+                <input type="text" required value={formData.place} onChange={(e) => setFormData({ ...formData, place: e.target.value })} className="w-full px-3 sm:px-5 py-2 sm:py-3 rounded-lg sm:rounded-xl bg-slate-50 border border-slate-200 text-sm sm:text-base" placeholder="Place" />
+                <input type="text" required value={formData.schoolName} onChange={(e) => setFormData({ ...formData, schoolName: e.target.value })} className="w-full px-3 sm:px-5 py-2 sm:py-3 rounded-lg sm:rounded-xl bg-slate-50 border border-slate-200 text-sm sm:text-base" placeholder="School Name" />
+                <input type="text" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="w-full px-3 sm:px-5 py-2 sm:py-3 rounded-lg sm:rounded-xl bg-slate-50 border border-slate-200 text-sm sm:text-base" placeholder="Email (optional)" />
                 <input type="tel" required value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} className="w-full px-3 sm:px-5 py-2 sm:py-3 rounded-lg sm:rounded-xl bg-slate-50 border border-slate-200 text-sm sm:text-base" placeholder="Phone" />
                 <select value={formData.program} onChange={(e) => setFormData({ ...formData, program: e.target.value })} className="w-full px-3 sm:px-5 py-2 sm:py-3 rounded-lg sm:rounded-xl bg-slate-50 border border-slate-200 text-sm sm:text-base">
-                  {PROGRAMS.map(p => <option key={p.id} value={p.title}>{p.title}</option>)}
-                  <option value="summercamp 2026 music">Summercamp 2026 Music</option>
-                  <option value="summercamp 2026 badminton">Summercamp 2026 Badminton</option>
-                  <option value="summercamp 2026 silambam">Summercamp 2026 Silambam</option>
-                  <option value="summercamp 2026 chess">Summercamp 2026 Chess</option>
-                  <option value="summercamp 2026 football">Summercamp 2026 Football</option>
-                  <option value="summercamp 2026 physical fitness and aerobics">Summercamp 2026 Physical Fitness and Aerobics</option>
+                {PROGRAMS.map(p => <option key={p.id} value={p.title}>{p.title}</option>)}
+                <option value="Chess Coaching">Chess Coaching</option>
+                <option value="summercamp 2026 music">Summercamp 2026 Music</option>
+                <option value="summercamp 2026 badminton">Summercamp 2026 KidsFun Activities</option>
+                <option value="summercamp 2026 archery">Summercamp 2026 Archery Batch-I (Apr 11-30)</option>
+                <option value="summercamp 2026 archery">Summercamp 2026 Archery Batch-II (May 1-20)</option>
+
+                <option value="summercamp 2026 athletics">Summercamp 2026 Athletics Batch-I (Apr 11-30)</option>
+                <option value="summercamp 2026 athletics">Summercamp 2026 Athletics Batch-II (May 1-20)</option>
+
+                <option value="summercamp 2026 badminton">Summercamp 2026 Badminton Batch-I (Apr 11-30)</option>
+                <option value="summercamp 2026 badminton">Summercamp 2026 Badminton Batch-II (May 1-20)</option>
+
+                <option value="summercamp 2026 chess">Summercamp 2026 Chess Batch-I (Apr 11-30)</option>
+                <option value="summercamp 2026 chess">Summercamp 2026 Chess Batch-II (May 1-20)</option>
+
+                <option value="summercamp 2026 football">Summercamp 2026 Football Batch-I (Apr 11-30)</option>
+                <option value="summercamp 2026 football">Summercamp 2026 Football Batch-II (May 1-20)</option>
+
+                <option value="summercamp 2026 physical fitness and aerobics">Summercamp 2026 Physical Fitness & Aerobics Batch-I (Apr 11-30)</option>
+                <option value="summercamp 2026 physical fitness and aerobics">Summercamp 2026 Physical Fitness & Aerobics Batch-II (May 1-20)</option>
+
+                <option value="summercamp 2026 roller skating">Summercamp 2026 Roller Skating Batch-I (Apr 11-30)</option>
+                <option value="summercamp 2026 roller skating">Summercamp 2026 Roller Skating Batch-II (May 1-20)</option>
+
+                <option value="summercamp 2026 silambam">Summercamp 2026 Silambam Batch-I (Apr 11-30)</option>
+                <option value="summercamp 2026 silambam">Summercamp 2026 Silambam Batch-II (May 1-20)</option>
+
+                <option value="summercamp 2026 yoga">Summercamp 2026 Yoga Batch-I (Apr 11-30)</option>
+                <option value="summercamp 2026 yoga">Summercamp 2026 Yoga Batch-II (May 1-20)</option>
+         
                 </select>
                 <button disabled={status === 'loading'} className="w-full bg-brand-navy text-white py-4 rounded-xl font-bold">{status === 'loading' ? 'Submitting...' : 'Submit Application'}</button>
               </form>

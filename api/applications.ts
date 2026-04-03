@@ -4,10 +4,12 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 // MongoDB Model inside the API file for serverless compatibility
 const ApplicationSchema = new mongoose.Schema({
-  fullName: String,
-  email: String,
-  phone: String,
-  program: String,
+  fullName: { type: String, required: true },
+  email: { type: String, required: false },
+  phone: { type: String, required: true },
+  place: { type: String, required: true },
+  schoolName: { type: String, required: true },
+  program: { type: String, required: true },
   status: { type: String, default: 'pending' },
   createdAt: { type: Date, default: Date.now }
 });
@@ -20,10 +22,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { fullName, email, phone, program } = req.body;
+    const { fullName, email, phone, place, schoolName, program } = req.body;
+    
+    console.log('Received application data:', { fullName, email, phone, place, schoolName, program });
 
-    if (!fullName || !email || !phone || !program) {
-      return res.status(400).json({ error: 'Missing required fields' });
+    // All fields are mandatory except email
+    if (!fullName || !phone || !place || !schoolName || !program) {
+      return res.status(400).json({ error: 'Missing required fields. Please fill in Name, Phone, Place, School Name, and Program.' });
     }
 
     // 1. Connect to DB
@@ -32,7 +37,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // 2. Save to DB
-    const newApp = new Application({ fullName, email, phone, program });
+    const newApp = new Application({ fullName, email, phone, place, schoolName, program });
     await newApp.save();
 
     // 3. Send Email if configured
@@ -51,7 +56,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           from: process.env.EMAIL_USER,
           to: process.env.EMAIL_USER,
           subject: '📩 New Student Enrollment Request',
-          text: `Name: ${fullName}\nPhone: ${phone}\nEmail: ${email}\nProgram: ${program}`
+          text: `Name: ${fullName}\nPlace: ${place}\nSchool Name: ${schoolName}\nPhone: ${phone}\nEmail: ${email || 'Not provided'}\nProgram: ${program}`
         });
         emailSent = true;
       } catch (emailErr) {

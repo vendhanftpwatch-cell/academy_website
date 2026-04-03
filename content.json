@@ -196,75 +196,6 @@
       "icon": "Award"
     }
   ],
-  "achievements_list": [
-    {
-      "title": "Medals & Certificates",
-      "number": "100+",
-      "label": "TOTAL",
-      "image": "images/skating-certif.png",
-      "description": "A testament to our students' hard work across district, state, and national levels.",
-      "subLinks": [
-        {
-          "name": "Dindigul District Speed Roller Skating Championship-2025",
-          "image": "images/certifi4.png",
-          "description": "Our students secured multiple gold and silver medals in the speed skating category."
-        },
-        {
-          "name": "Dindigul District Level Interschool Rollar Aeroskatoball Championship-2026",
-          "image": "images/certifi1.png",
-          "description": "Champions in the inter-school Aeroskatoball tournament held in 2026."
-        },
-        {
-          "name": "JSA Open State Level Championship-2025",
-          "image": "images/certifi3.png",
-          "description": "A remarkable performance at the state level, bringing home the championship trophy."
-        },
-        {
-          "name": "Sai G Roller Skating Academy-2026",
-          "image": "images/certifi2.png",
-          "description": "Excellence award received for technical skills and sportsmanship."
-        },
-        {
-          "name": "Annual Athletics Meet Gold Medalist",
-          "image": "images/athlet.png",
-          "description": "Sweeping the gold medals in the 100m and 200m track events."
-        }
-      ]
-    },
-    {
-      "title": "ARJUNA WORLD RECORD",
-      "number": "01",
-      "label": "WORLD RECORD",
-      "image": "images/world-record-boy.png",
-      "description": "2 Hours Non-Stop Silambam with Skating – A proud moment of dedication and excellence.",
-      "subLinks": [
-        {
-          "name": "World Record Certificate",
-          "image": "images/world-record-boy.png",
-          "description": "Official certification from the Arjuna World Records committee."
-        },
-        {
-          "name": "Event Highlights",
-          "image": "images/arjuna.mp4",
-          "description": "A glimpse of the 2-hour non-stop performance."
-        }
-      ]
-    },
-    {
-      "title": "DISTRICT YOGA EXCELLENCE",
-      "number": "03",
-      "label": "AWARDS",
-      "image": "images/yoga-standing.png",
-      "description": "Recognized as the 'Best Training Center' for promoting traditional yoga practices.",
-      "subLinks": [
-        {
-          "name": "Best Training Center 2024",
-          "image": "images/yoga-standing.png",
-          "description": "Awarded for outstanding contribution to traditional yoga."
-        }
-      ]
-    }
-  ],
   "coaches": [
     {
       "name": "Dr.T. Ganesh Babu",
@@ -277,6 +208,10 @@
       "image": "/images/coach_nandhu.png"
     }
   ],
+  "version": 27,
+  "lastUpdatedAt": "2026-04-03T13:38:49.171Z",
+  "__v": 10,
+  "lastUpdatedBy": "admin",
   "summer_camp": {
     "features": [
       {
@@ -300,5 +235,74 @@
         "icon": "Users"
       }
     ]
-  }
+  },
+  "achievements_list": [
+    {
+      "title": "Medals & Certificates",
+      "number": "100+",
+      "label": "TOTAL",
+      "image": "images/skating-certif.png",
+      "description": "A testament to our students' hard work across district, state, and national levels.",
+      "subLinks": [
+        {
+          "name": "Dindigul District Speed Roller Skating Championship-2024",
+          "image": "images/certifi4.png",
+          "description": "Our students secured multiple gold and silver medals in the speed skating category."
+        },
+        {
+          "name": "Dindigul District Speed Roller Skating Championship-2025",
+          "image": "images/certifi4.png",
+          "description": "Our students secured multiple gold and silver medals in the speed skating category."
+        },
+        {
+          "name": "Dindigul District Level Interschool Rollar Aeroskatoball Championship-2026",
+          "image": "images/certifi1.png",
+          "description": "Champions in the inter-school Aeroskatoball tournament held in 2026."
+        },
+        {
+          "name": "JSA Open State Level Championship-2025",
+          "image": "images/certifi3.png",
+          "description": "A remarkable performance at the state level, bringing home the championship trophy."
+        },
+        {
+          "name": "Sai G State Level Roller Skating Academy-2026",
+          "image": "images/certifi2.png",
+          "description": "Excellence award received for technical skills and sportsmanship."
+        }
+      ]
+    },
+    {
+      "title": "ARJUNA WORLD RECORD",
+      "number": "01",
+      "label": "WORLD RECORD",
+      "image": "images/world-record-boy.png",
+      "description": "2 Hours Non-Stop Silambam with Skating – A proud moment of dedication and excellence.",
+      "subLinks": [
+        {
+          "name": "World Record Certificate",
+          "image": "images/certifi2.png",
+          "description": "Official certification from the Arjuna World Records committee."
+        },
+        {
+          "name": "Event Highlights",
+          "image": "images/arjuna.mp4",
+          "description": "A glimpse of the 2-hour non-stop performance."
+        }
+      ]
+    },
+    {
+      "title": "Tamil Nadu State Level Amateur Rollar Skating Championship",
+      "number": "03",
+      "label": "AWARDS",
+      "image": "images/yoga-standing.png",
+      "description": "State Level championship",
+      "subLinks": [
+        {
+          "name": "Best Training Center 2024",
+          "image": "images/yoga-standing.png",
+          "description": "Awarded for outstanding contribution to traditional yoga."
+        }
+      ]
+    }
+  ]
 }

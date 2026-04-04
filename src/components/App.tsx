@@ -1378,7 +1378,9 @@ return (
         <JoinForm />
         <Footer onEdit={() => setIsEditing(true)} />
         
-        {/* ... Rest of components ... */}
+        {selectedImage && (
+          <Lightbox imageUrl={selectedImage} onClose={() => setSelectedImage(null)} />
+        )}
       </div>
     </ContentContext.Provider>
   );

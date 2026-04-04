@@ -587,9 +587,12 @@ const SummerCampModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
   
     return (
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] bg-slate-900/70 backdrop-blur-md flex items-center justify-center p-4">
-        <motion.div initial={{ y: 20 }} animate={{ y: 0 }} className="bg-white rounded-xl w-full max-w-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+        <motion.div initial={{ y: 20 }} animate={{ y: 0 }} className="bg-white rounded-xl w-full max-w-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col relative">
+          <button onClick={onClose} className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10 p-1.5 sm:p-2 bg-white/20 hover:bg-white/30 rounded-full text-white transition-colors">
+            <X className="w-5 h-5" />
+          </button>
           {/* HEADER */}
-          <div className="bg-[#0F6E56] p-4 sm:p-6">
+          <div className="bg-[#0F6E56] p-4 sm:p-6 pt-10 sm:pt-12">
             <div className="flex items-center gap-3 mb-3">
               <img src="images/logo.png" alt="Logo" className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg bg-white/15 border border-white/30 object-contain p-1" />
               <div>

@@ -385,7 +385,7 @@ const SummerCamp = ({ onImageClick, onEnrollClick }: { onImageClick: (url: strin
   // Safety check: if data is missing, use an empty list
   const { features = [] } = summer_camp || {};
   
-  const campImages = ["/images/SUM1.png", "/images/SUM2.png", "/images/SUM3.png", "/images/SUM4.png"];
+  const campImages = ["/images/FIN1.png", "/images/FIN2.png", "/images/FIN5.png", "/images/FIN4.png"];
 
   return (
     <section id="summer-camp" className="section-padding bg-brand-orange text-white overflow-hidden relative">

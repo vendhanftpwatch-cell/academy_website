@@ -54,6 +54,13 @@ interface Content {
       description: string;
       icon: string;
     }[];
+    batches?: {
+      id: string;
+      name: string;
+      dates: string;
+    }[];
+    activityBatches?: Record<string, string[]>;
+    activityBatchDates?: Record<string, Record<string, string>>;
   };
 }
 
@@ -125,6 +132,15 @@ const Navbar = ({ onOpenModal }: { onOpenModal: () => void }) => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [isMobileMenuOpen]);
+
   const navLinks = [
     { name: 'Programs', href: '#programs' },
     { name: 'Summer Camp', href: '#summer-camp' },
@@ -133,29 +149,66 @@ const Navbar = ({ onOpenModal }: { onOpenModal: () => void }) => {
     { name: 'About', href: '#about' },
   ];
 
+  const handleNavClick = () => setIsMobileMenuOpen(false);
+
   return (
-    <nav className={`fixed top-0 w-full z-[100] transition-all duration-300 ${isScrolled ? 'bg-white shadow-md py-2' : 'bg-transparent py-4'}`}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 flex justify-between items-center">
-        <div className="flex items-center gap-2">
-          <img src="images/logo.png" alt="Logo" className="w-16 h-16 md:w-20 md:h-20 object-contain" />
-          <div className={`flex flex-col leading-tight font-bold ${isScrolled ? 'text-brand-navy' : 'text-white'}`}>
-            <span className="text-lg uppercase tracking-tighter">VENDHAN</span>
-            <span className={`text-[10px] font-semibold ${isScrolled ? 'text-slate-500' : 'text-brand-orange'}`}>Sports Academy</span>
+    <>
+      <nav className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-300 ${isScrolled ? 'bg-white shadow-md py-2' : 'bg-transparent py-3 sm:py-4'}`}>
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <img src="images/logo.png" alt="Logo" className="w-10 h-10 sm:w-14 sm:h-14 md:w-16 md:h-16 object-contain" />
+            <div className={`flex flex-col leading-tight font-bold ${isScrolled ? 'text-brand-navy' : 'text-white'}`}>
+              <span className="text-sm sm:text-lg uppercase tracking-tighter">VENDHAN</span>
+              <span className={`text-[6px] sm:text-[10px] font-semibold ${isScrolled ? 'text-slate-500' : 'text-brand-orange'}`}>Sports Academy</span>
+            </div>
           </div>
-        </div>
 
-        <div className="hidden md:flex items-center gap-6">
-          {navLinks.map((link) => (
-            <a key={link.name} href={link.href} className={`text-sm font-bold hover:text-brand-orange transition-colors ${isScrolled ? 'text-slate-600' : 'text-white'}`}>{link.name}</a>
-          ))}
-          <a href="#join" className="bg-brand-orange text-white px-5 py-2 rounded-full text-sm font-bold hover:scale-105 transition-all">Join Academy</a>
-        </div>
+          <div className="hidden lg:flex items-center gap-4 xl:gap-6">
+            {navLinks.map((link) => (
+              <a key={link.name} href={link.href} className={`text-xs xl:text-sm font-bold hover:text-brand-orange transition-colors ${isScrolled ? 'text-slate-600' : 'text-white'}`}>{link.name}</a>
+            ))}
+            <a href="#join" className="bg-brand-orange text-white px-4 xl:px-5 py-1.5 xl:py-2 rounded-full text-xs xl:text-sm font-bold hover:scale-105 transition-all">Join Academy</a>
+          </div>
 
-        <button className="md:hidden p-2" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
-          {isMobileMenuOpen ? <X className="text-brand-navy" /> : <Menu className={isScrolled ? 'text-brand-navy' : 'text-white'} />}
-        </button>
-      </div>
-    </nav>
+          <button className="lg:hidden p-2" onClick={() => setIsMobileMenuOpen(true)}>
+            <Menu className={`w-6 h-6 ${isScrolled || isMobileMenuOpen ? 'text-brand-navy' : 'text-white'}`} />
+          </button>
+        </div>
+      </nav>
+
+      {/* Mobile Menu Overlay */}
+      {isMobileMenuOpen && (
+        <div className="fixed inset-0 z-[150] lg:hidden">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsMobileMenuOpen(false)}></div>
+          <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'tween', duration: 0.3 }} className="absolute right-0 top-0 bottom-0 w-72 bg-white shadow-2xl flex flex-col">
+            <div className="flex items-center justify-between p-4 border-b">
+              <span className="font-bold text-brand-navy">Menu</span>
+              <button onClick={() => setIsMobileMenuOpen(false)} className="p-2">
+                <X className="w-6 h-6 text-brand-navy" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto py-4">
+              {navLinks.map((link, idx) => (
+                <motion.a
+                  key={link.name}
+                  href={link.href}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: idx * 0.05 }}
+                  onClick={handleNavClick}
+                  className="block px-6 py-3 text-base font-bold text-brand-navy hover:bg-slate-50 hover:text-brand-orange border-b border-slate-100"
+                >
+                  {link.name}
+                </motion.a>
+              ))}
+            </div>
+            <div className="p-4 border-t">
+              <a href="#join" onClick={handleNavClick} className="block w-full bg-brand-orange text-white text-center py-3 rounded-full font-bold">Join Academy</a>
+            </div>
+          </motion.div>
+        </div>
+      )}
+    </>
   );
 };
 
@@ -170,19 +223,19 @@ const Hero = () => {
   }, [slides.length]);
 
   return (
-    <section className="relative h-screen flex items-center overflow-hidden bg-brand-navy">
+    <section className="relative min-h-screen flex items-center overflow-hidden bg-brand-navy">
       <div className="absolute inset-0 z-0">
         <AnimatePresence mode="wait">
           <motion.img key={currentSlide} src={slides[currentSlide]} initial={{ opacity: 0 }} animate={{ opacity: 0.6 }} exit={{ opacity: 0 }} transition={{ duration: 1.5 }} className="w-full h-full object-cover" />
         </AnimatePresence>
       </div>
-      <div className="relative z-10 max-w-7xl mx-auto px-6 w-full">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 w-full">
         <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="max-w-3xl">
-          <span className="px-4 py-1.5 bg-brand-orange/20 text-brand-orange rounded-full text-xs font-bold uppercase mb-6 inline-block">{hero?.badge}</span>
-          <h1 className="text-5xl md:text-8xl text-white font-black uppercase leading-none mb-8">{hero?.title}</h1>
-          <p className="text-xl text-slate-300 mb-10 max-w-lg">{hero?.subtitle}</p>
-          <div className="flex gap-4">
-            <a href="#programs" className="bg-brand-orange text-white px-8 py-4 rounded-full font-bold flex items-center gap-2">Explore Programs <ArrowRight size={20}/></a>
+          <span className="px-3 py-1.5 bg-brand-orange/20 text-brand-orange rounded-full text-xs font-bold uppercase mb-4 sm:mb-6 inline-block">{hero?.badge}</span>
+          <h1 className="text-3xl sm:text-5xl md:text-7xl lg:text-8xl text-white font-black uppercase leading-[0.9] sm:leading-none mb-4 sm:mb-8">{hero?.title}</h1>
+          <p className="text-base sm:text-xl text-slate-300 mb-6 sm:mb-10 max-w-lg">{hero?.subtitle}</p>
+          <div className="flex flex-wrap gap-3 sm:gap-4">
+            <a href="#programs" className="bg-brand-orange text-white px-5 sm:px-8 py-3 sm:py-4 rounded-full font-bold flex items-center gap-2 text-sm sm:text-base">Explore Programs <ArrowRight size={18} className="sm:w-5 sm:h-5"/></a>
           </div>
         </motion.div>
       </div>
@@ -427,42 +480,65 @@ const SummerCamp = ({ onImageClick, onEnrollClick }: { onImageClick: (url: strin
 
 // --- MODAL COMPONENT ---
 const SummerCampModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
+    const { summer_camp } = useContent();
+    const batches = summer_camp?.batches || [
+      { id: 'b1', name: 'Batch I', dates: 'Apr 11 - Apr 30' },
+      { id: 'b2', name: 'Batch II', dates: 'May 1-20' }
+    ];
+    
     const [step, setStep] = useState(1);
-    const [formData, setFormData] = useState({ fullName: '', schoolName: '', place: '', email: '', phone: '', parentName: '', age: '' });
-    const [selections, setSelections] = useState<Record<string, string[]>>({});
+    const [formData, setFormData] = useState({ fullName: '', schoolName: '', place: '', phone: '', email: '' });
+    const [errors, setErrors] = useState<Record<string, boolean>>({});
+    const [selections, setSelections] = useState<Record<string, { b1: boolean; b2: boolean }>>({});
     const [status, setStatus] = useState<'idle' | 'loading' | 'success'>('idle');
   
-    const gamesList = [
-      { name: "Archery", icon: "🎯" },
-      { name: "Music", icon: "🎵" },
-      { name: "Badminton", icon: "🏸" },
-      { name: "Physical Fitness & Aerobics", icon: "💪" },
-      { name: "Chess Coaching", icon: "♟️" },
-      { name: "Roller Skating", icon: "⛸️" },
-      { name: "Football", icon: "⚽" },
-      { name: "Silambam", icon: "🥢" },
-      { name: "KidsFun Camp", icon: "🎮" },
-      { name: "Yoga", icon: "🧘" }
+    const activities = [
+      "Archery", "Badminton", "Chess Coaching", "Football",
+      "KidsFun Camp", "Music", "Physical Fitness & Aerobics",
+      "Roller Skating", "Silambam", "Yoga"
     ];
-  
-    const toggleSelection = (game: string, batch: string) => {
-      setSelections(prev => {
-        const current = prev[game] || [];
-        const updated = current.includes(batch) ? current.filter(b => b !== batch) : [...current, batch];
-        const newState = { ...prev };
-        if (updated.length > 0) newState[game] = updated; else delete newState[game];
-        return newState;
-      });
+
+    React.useEffect(() => {
+      if (isOpen) {
+        const initial: Record<string, { b1: boolean; b2: boolean }> = {};
+        activities.forEach(a => initial[a] = { b1: false, b2: false });
+        setSelections(initial);
+        setFormData({ fullName: '', schoolName: '', place: '', phone: '', email: '' });
+        setErrors({});
+        setStep(1);
+        setStatus('idle');
+      }
+    }, [isOpen]);
+
+    const toggleSelection = (activity: string, batch: 'b1' | 'b2') => {
+      setSelections(prev => ({
+        ...prev,
+        [activity]: {
+          ...prev[activity],
+          [batch]: !prev[activity][batch]
+        }
+      }));
     };
+
+    const isSelected = (activity: string) => selections[activity]?.b1 || selections[activity]?.b2;
   
     const handleSubmit = async () => {
       setStatus('loading');
-      const formatted = Object.entries(selections).map(([g, b]) => `${g}: ${b.join(' and ')}`).join(' | ');
+      const chosen = activities.filter(a => selections[a]?.b1 || selections[a]?.b2);
+      const batch1 = batches.find(b => b.id === 'b1');
+      const batch2 = batches.find(b => b.id === 'b2');
+      const program = chosen.map(a => {
+        const bs = [];
+        if (selections[a].b1) bs.push((batch1?.name || 'Batch I') + ' (' + (batch1?.dates || '') + ')');
+        if (selections[a].b2) bs.push((batch2?.name || 'Batch II') + ' (' + (batch2?.dates || '') + ')');
+        return a + ': ' + bs.join(' & ');
+      }).join(' | ');
+      
       try {
         const res = await fetch('/api/applications', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...formData, program: formatted })
+          body: JSON.stringify({ ...formData, program })
         });
         if (res.ok) setStatus('success');
       } catch (e) { setStatus('idle'); alert("Error submitting"); }
@@ -470,149 +546,241 @@ const SummerCampModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       setFormData({ ...formData, [e.target.name]: e.target.value });
+      if (errors[e.target.name]) setErrors({ ...errors, [e.target.name]: false });
+    };
+  
+    const validateStep1 = () => {
+      const newErrors: Record<string, boolean> = {};
+      if (!formData.fullName.trim()) newErrors.fullName = true;
+      if (!formData.schoolName.trim()) newErrors.schoolName = true;
+      if (!formData.place.trim()) newErrors.place = true;
+      if (!/^\d{10}$/.test(formData.phone)) newErrors.phone = true;
+      setErrors(newErrors);
+      return Object.keys(newErrors).length === 0;
+    };
+
+    const validateStep2 = () => {
+      const hasAny = activities.some(a => selections[a]?.b1 || selections[a]?.b2);
+      if (!hasAny) alert("Please select at least one activity and batch before continuing.");
+      return hasAny;
+    };
+
+    const goToStep = (s: number) => {
+      if (s === 2 && step === 1 && !validateStep1()) return;
+      if (s === 3 && step === 2 && !validateStep2()) return;
+      setStep(s);
+    };
+
+    const resetForm = () => {
+      setFormData({ fullName: '', schoolName: '', place: '', phone: '', email: '' });
+      setErrors({});
+      const initial: Record<string, { b1: boolean; b2: boolean }> = {};
+      activities.forEach(a => initial[a] = { b1: false, b2: false });
+      setSelections(initial);
+      setStep(1);
+      setStatus('idle');
     };
   
     if (!isOpen) return null;
+
+    const chosenActivities = activities.filter(a => selections[a]?.b1 || selections[a]?.b2);
   
     return (
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] bg-slate-900/70 backdrop-blur-md flex items-center justify-center p-4">
-        <motion.div initial={{ y: 20 }} animate={{ y: 0 }} className="bg-white rounded-3xl w-full max-w-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-          <div className="bg-gradient-to-r from-[#2c6e81] to-[#1a4a5a] p-6 text-white flex justify-between items-center">
-            <div>
-              <h2 className="text-xl font-bold">Summer Camp 2026</h2>
-              <p className="text-xs text-white/70">Register Now</p>
+        <motion.div initial={{ y: 20 }} animate={{ y: 0 }} className="bg-white rounded-xl w-full max-w-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+          {/* HEADER */}
+          <div className="bg-[#0F6E56] p-4 sm:p-6">
+            <div className="flex items-center gap-3 mb-3">
+              <img src="images/logo.png" alt="Logo" className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg bg-white/15 border border-white/30 object-contain p-1" />
+              <div>
+                <div className="text-white font-bold text-base sm:text-lg">Vendhan Sports Academy</div>
+                <div className="text-white/70 text-xs">Excellence in Sports Education</div>
+              </div>
             </div>
-            <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full"><X /></button>
+            <div className="text-white text-lg sm:text-xl font-bold">Vendhan Summer Camp 2026</div>
+            <div className="text-white/70 text-sm">Student Registration Form</div>
           </div>
 
-          <div className="flex items-center justify-center gap-2 py-4 bg-slate-50">
-            {[1, 2, 3].map(s => (
-              <div key={s} className={`flex items-center gap-2`}>
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${step >= s ? 'bg-[#2c6e81] text-white' : 'bg-slate-200 text-slate-500'}`}>{s}</div>
-                {s < 3 && <div className={`w-12 h-0.5 ${step > s ? 'bg-[#2c6e81]' : 'bg-slate-200'}`} />}
+          {/* STEPS */}
+          <div className="flex bg-[#f7fbfc] border-b border-[#dde8ec]">
+            {[
+              { n: 1, label: 'Student Details' },
+              { n: 2, label: 'Select Activities' },
+              { n: 3, label: 'Review & Submit' }
+            ].map(s => (
+              <div key={s.n} className={'flex-1 py-3 text-center text-xs cursor-default ' + (step === s.n ? 'text-[#0F6E56] font-bold border-b-2 border-[#0F6E56]' : step > s.n ? 'text-[#0F6E56]' : 'text-[#888]')}>
+                <span className={'inline-flex items-center justify-center w-5 h-5 rounded-full border text-[11px] mr-1 ' + (step >= s.n ? 'bg-[#0F6E56] text-white border-[#0F6E56]' : 'border-current')}>{s.n}</span>
+                {s.label}
               </div>
             ))}
           </div>
-  
+
+          {/* BODY */}
           <div className="flex-1 overflow-y-auto p-6">
             {status === 'success' ? (
               <div className="text-center py-12">
-                <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <CheckCircle2 size={40} className="text-green-500" />
-                </div>
-                <h3 className="text-2xl font-bold text-brand-navy mb-2">Registration Successful!</h3>
-                <p className="text-slate-500 mb-6">We will contact you soon with more details.</p>
-                <button onClick={onClose} className="px-6 py-2 bg-[#2c6e81] text-white rounded-lg font-bold">Close</button>
+                <div className="w-14 h-14 bg-[#EAF6FA] rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">✓</div>
+                <h3 className="text-lg font-bold text-[#0F6E56] mb-2">Registration Submitted!</h3>
+                <p className="text-sm text-[#666] mb-6">Thank you, <strong>{formData.fullName}</strong>.<br/>Your registration has been received. Our team will contact you shortly.</p>
+                <button onClick={() => { resetForm(); onClose(); }} className="px-6 py-2 bg-[#0F6E56] text-white rounded-lg font-bold">Close</button>
               </div>
             ) : (
               <>
                 {step === 1 && (
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-bold text-brand-navy mb-4">Student Details</h3>
-                    <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <div className="text-[#0F6E56] text-xs font-bold uppercase tracking-wider mb-4 pb-2 border-b-2 border-[#E8F4F8]">Personal Information</div>
+                    <div className={`mb-4 ${errors.fullName ? 'bg-red-50' : ''}`}>
+                      <label className="block text-sm font-bold text-[#555] mb-1">Student Name *</label>
+                      <input name="fullName" value={formData.fullName} onChange={handleChange} className={`w-full h-10 px-3 border rounded-lg text-sm ${errors.fullName ? 'border-red-500' : 'border-[#ccd8dc]'}`} placeholder="Full name" />
+                      {errors.fullName && <div className="text-xs text-red-500 mt-1">This field is required.</div>}
+                    </div>
+                    <div className="grid grid-cols-2 gap-4 mb-4">
                       <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Student Name *</label>
-                        <input name="fullName" value={formData.fullName} onChange={handleChange} className="w-full p-3 border border-slate-200 rounded-xl focus:border-[#2c6e81] focus:outline-none" placeholder="Enter student name" />
+                        <label className="block text-sm font-bold text-[#555] mb-1">School Name *</label>
+                        <input name="schoolName" value={formData.schoolName} onChange={handleChange} className={`w-full h-10 px-3 border rounded-lg text-sm ${errors.schoolName ? 'border-red-500' : 'border-[#ccd8dc]'}`} placeholder="School name" />
+                        {errors.schoolName && <div className="text-xs text-red-500 mt-1">This field is required.</div>}
                       </div>
                       <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Age *</label>
-                        <input name="age" value={formData.age} onChange={handleChange} type="number" className="w-full p-3 border border-slate-200 rounded-xl focus:border-[#2c6e81] focus:outline-none" placeholder="Enter age" />
+                        <label className="block text-sm font-bold text-[#555] mb-1">Place / City *</label>
+                        <input name="place" value={formData.place} onChange={handleChange} className={`w-full h-10 px-3 border rounded-lg text-sm ${errors.place ? 'border-red-500' : 'border-[#ccd8dc]'}`} placeholder="City or town" />
+                        {errors.place && <div className="text-xs text-red-500 mt-1">This field is required.</div>}
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4 mb-4">
+                      <div>
+                        <label className="block text-sm font-bold text-[#555] mb-1">Phone Number *</label>
+                        <input name="phone" value={formData.phone} onChange={handleChange} maxLength={10} className={`w-full h-10 px-3 border rounded-lg text-sm ${errors.phone ? 'border-red-500' : 'border-[#ccd8dc]'}`} placeholder="10-digit number" />
+                        {errors.phone && <div className="text-xs text-red-500 mt-1">Enter a valid 10-digit number.</div>}
                       </div>
                       <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">School Name *</label>
-                        <input name="schoolName" value={formData.schoolName} onChange={handleChange} className="w-full p-3 border border-slate-200 rounded-xl focus:border-[#2c6e81] focus:outline-none" placeholder="Enter school name" />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Place *</label>
-                        <input name="place" value={formData.place} onChange={handleChange} className="w-full p-3 border border-slate-200 rounded-xl focus:border-[#2c6e81] focus:outline-none" placeholder="Enter place" />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Phone *</label>
-                        <input name="phone" value={formData.phone} onChange={handleChange} className="w-full p-3 border border-slate-200 rounded-xl focus:border-[#2c6e81] focus:outline-none" placeholder="Enter phone number" />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Email</label>
-                        <input name="email" value={formData.email} onChange={handleChange} className="w-full p-3 border border-slate-200 rounded-xl focus:border-[#2c6e81] focus:outline-none" placeholder="Enter email (optional)" />
+                        <label className="block text-sm font-bold text-[#555] mb-1">Email Address</label>
+                        <input name="email" value={formData.email} onChange={handleChange} className="w-full h-10 px-3 border border-[#ccd8dc] rounded-lg text-sm" placeholder="email@example.com (optional)" />
                       </div>
                     </div>
                   </div>
                 )}
                 {step === 2 && (
-                  <div>
-                    <h3 className="text-lg font-bold text-brand-navy mb-2">Select Activities</h3>
-                    <p className="text-sm text-slate-500 mb-4">Choose activities and batches for Summer Camp 2026</p>
-                    <div className="grid md:grid-cols-2 gap-4">
-                      {gamesList.map(game => (
-                        <div key={game.name} className="p-4 border border-slate-200 rounded-xl bg-white hover:border-[#2c6e81] transition-colors">
-                          <div className="flex items-center gap-2 mb-3">
-                            <span className="text-xl">{game.icon}</span>
-                            <h5 className="font-bold text-sm text-brand-navy">{game.name}</h5>
-                          </div>
-                          <div className="space-y-2">
-                            {['Batch I (Apr 11-30)', 'Batch II (May 1-20)'].map(b => (
-                              <label key={b} className="flex items-center gap-2 text-xs cursor-pointer">
-                                <input 
-                                  type="checkbox" 
-                                  checked={selections[game.name]?.includes(b) || false}
-                                  onChange={() => toggleSelection(game.name, b)} 
-                                  className="w-4 h-4 text-[#2c6e81] rounded focus:ring-[#2c6e81]"
-                                /> 
-                                <span className="text-slate-600">{b}</span>
+                  <div className="flex flex-col h-full">
+                    <div className="text-[#0F6E56] text-sm font-medium mb-3">Select activities and batches</div>
+                    <div className="flex-1 overflow-y-auto max-h-[400px] pr-1">
+                      <div className="grid grid-cols-2 gap-3">
+                        {activities.map((act, idx) => {
+                          const icons = ["🎯", "🏸", "♟️", "⚽", "🎮", "🎵", "💪", "⛸️", "🥢", "🧘"];
+                          const singleBatchActivities = ['Music', 'KidsFun Camp'];
+                          const isSingleBatch = singleBatchActivities.includes(act);
+                          const activityBatches = summer_camp?.activityBatches?.[act];
+                          const showB1 = isSingleBatch || !activityBatches || activityBatches.includes('b1');
+                          const showB2 = !isSingleBatch && (!activityBatches || activityBatches.includes('b2'));
+                          const customDates = summer_camp?.activityBatchDates?.[act];
+                          const b1Batch = batches.find(b => b.id === 'b1');
+                          const b2Batch = batches.find(b => b.id === 'b2');
+                          const b1Dates = isSingleBatch ? (act === 'Music' ? 'Apr 17 - May 6' : 'Apr 11 - Apr 30') : (customDates?.b1 || b1Batch?.dates || 'Apr 17 - May 6');
+                          const b1 = { name: b1Batch?.name || 'Batch I', dates: b1Dates };
+                          const b2 = { name: b2Batch?.name || 'Batch II', dates: customDates?.b2 || b2Batch?.dates || 'May 1-20' };
+                          const isActSelected = isSelected(act);
+                          return (
+                          <div key={act} className={`border rounded-xl p-3 bg-white transition-all duration-200 ${isActSelected ? 'border-[#0F6E56] bg-[#E1F5EE] shadow-sm' : 'border-slate-200 hover:border-slate-300'}`}>
+                            <div className="flex items-center gap-2 mb-3">
+                              <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-lg ${isActSelected ? 'bg-[#0F6E56]/20' : 'bg-slate-100'}`}>{icons[idx]}</div>
+                              <div className="font-medium text-[13px] text-slate-800">{act}</div>
+                            </div>
+                            <div className="space-y-2">
+                              {showB1 && (
+                              <label className={`flex items-center gap-2 cursor-pointer group`}>
+                                <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all ${selections[act]?.b1 ? 'bg-[#0F6E56] border-[#0F6E56]' : 'border-slate-300 group-hover:border-[#0F6E56]'}`}>
+                                  {selections[act]?.b1 && <span className="text-white text-[10px]">✓</span>}
+                                </div>
+                                <input type="checkbox" className="hidden" checked={selections[act]?.b1 || false} onChange={() => toggleSelection(act, 'b1')} />
+                                <span className="text-[11px] text-slate-600">
+                                  <span className="font-bold">Batch I:</span> {b1.dates}
+                                </span>
                               </label>
-                            ))}
+                              )}
+                              {showB2 && (
+                              <label className={`flex items-center gap-2 cursor-pointer group`}>
+                                <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all ${selections[act]?.b2 ? 'bg-[#0F6E56] border-[#0F6E56]' : 'border-slate-300 group-hover:border-[#0F6E56]'}`}>
+                                  {selections[act]?.b2 && <span className="text-white text-[10px]">✓</span>}
+                                </div>
+                                <input type="checkbox" className="hidden" checked={selections[act]?.b2 || false} onChange={() => toggleSelection(act, 'b2')} />
+                                <span className="text-[11px] text-slate-600">
+                                  <span className="font-bold">Batch II:</span> {b2.dates}
+                                </span>
+                              </label>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        )})}
+                      </div>
                     </div>
                   </div>
                 )}
                 {step === 3 && (
-                  <div className="space-y-6">
-                    <div className="p-6 bg-slate-50 rounded-xl">
-                      <h4 className="font-bold text-brand-navy mb-4">Student Details</h4>
-                      <div className="grid grid-cols-2 gap-2 text-sm">
-                        <div><span className="text-slate-500">Name:</span> <span className="font-medium">{formData.fullName || '-'}</span></div>
-                        <div><span className="text-slate-500">Age:</span> <span className="font-medium">{formData.age || '-'}</span></div>
-                        <div><span className="text-slate-500">School:</span> <span className="font-medium">{formData.schoolName || '-'}</span></div>
-                        <div><span className="text-slate-500">Place:</span> <span className="font-medium">{formData.place || '-'}</span></div>
-                        <div><span className="text-slate-500">Phone:</span> <span className="font-medium">{formData.phone || '-'}</span></div>
-                        <div><span className="text-slate-500">Email:</span> <span className="font-medium">{formData.email || '-'}</span></div>
-                      </div>
-                    </div>
-                    <div className="p-6 bg-slate-50 rounded-xl">
-                      <h4 className="font-bold text-brand-navy mb-4">Selected Activities</h4>
-                      {Object.keys(selections).length > 0 ? (
-                        <div className="space-y-2">
-                          {Object.entries(selections).map(([g, b]) => (
-                            <div key={g} className="flex items-center gap-2 text-sm">
-                              <span className="w-2 h-2 bg-[#2c6e81] rounded-full"></span>
-                              <span className="font-medium">{g}</span>
-                              <span className="text-slate-500">: {b.join(', ')}</span>
+                  <div>
+                    <div className="text-[#0F6E56] text-xs font-bold uppercase tracking-wider mb-4 pb-2 border-b-2 border-[#E8F4F8]">Student Details</div>
+                    <table className="w-full mb-6 text-sm">
+                      <tbody>
+                        {[
+                          ['Student Name', formData.fullName],
+                          ['School Name', formData.schoolName],
+                          ['Place / City', formData.place],
+                          ['Phone Number', formData.phone],
+                          ['Email Address', formData.email]
+                        ].map(([label, value]) => (
+                          <tr key={label}>
+                            <td className="py-2 px-3 bg-[#F7FBFD] text-[#5A7A8A] font-bold w-2/5">{label}</td>
+                            <td className="py-2 px-3 bg-white text-[#1a1a1a]">{value}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    <div className="text-[#0F6E56] text-xs font-bold uppercase tracking-wider mb-4 pb-2 border-b-2 border-[#E8F4F8]">Selected Activities & Batches</div>
+                    {chosenActivities.length > 0 ? (
+                      <div className="space-y-3">
+                        {chosenActivities.map(a => {
+                          const singleBatchActivities = ['Music', 'KidsFun Camp'];
+                          const isSingleBatch = singleBatchActivities.includes(a);
+                          const customDates = summer_camp?.activityBatchDates?.[a];
+                          const b1Batch = batches.find(b => b.id === 'b1');
+                          const b2Batch = batches.find(b => b.id === 'b2');
+                          const b1Dates = isSingleBatch ? (a === 'Music' ? 'Apr 17 - May 6' : 'Apr 11 - Apr 30') : (customDates?.b1 || b1Batch?.dates || 'Apr 17 - May 6');
+                          const b1 = { name: b1Batch?.name || 'Batch I', dates: b1Dates };
+                          const b2 = { name: b2Batch?.name || 'Batch II', dates: customDates?.b2 || b2Batch?.dates || 'May 1-20' };
+                          return (
+                          <div key={a} className="py-2 border-b border-[#eee] last:border-0">
+                            <div className="font-bold text-sm text-[#1a1a1a] mb-1">{a}</div>
+                            <div className="flex flex-wrap gap-2">
+                              {selections[a].b1 && <span className="text-xs px-2 py-1 rounded-full bg-[#E8F4F8] text-[#0F6E56] border border-[#A8D4E0]">{b1.name} — {b1.dates}</span>}
+                              {selections[a].b2 && <span className="text-xs px-2 py-1 rounded-full bg-[#E8F4F8] text-[#0F6E56] border border-[#A8D4E0]">{b2.name} — {b2.dates}</span>}
                             </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="text-slate-400 text-sm">No activities selected</p>
-                      )}
-                    </div>
+                          </div>
+                        )})}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-[#888] py-3">No activities selected.</p>
+                    )}
                   </div>
                 )}
               </>
             )}
           </div>
-  
-          <div className="p-6 border-t bg-slate-50 flex justify-between gap-4">
-            {step > 1 && (
-              <button onClick={() => setStep(step - 1)} className="px-6 py-3 rounded-xl font-bold text-slate-500 hover:bg-slate-200 transition-colors">Back</button>
-            )}
-            <div className="flex-1"></div>
-            <button 
-              onClick={() => step < 3 ? setStep(step + 1) : handleSubmit()} 
-              disabled={status === 'loading'}
-              className="px-8 py-3 bg-[#2c6e81] text-white rounded-xl font-bold hover:bg-[#1a4a5a] transition-colors disabled:opacity-50"
-            >
-              {status === 'loading' ? 'Submitting...' : step < 3 ? 'Next' : 'Submit'}
-            </button>
+
+          {/* FOOTER */}
+          {status !== 'success' && (
+            <div className="p-4 border-t bg-[#f0f4f6] flex justify-between">
+              {step > 1 && (
+                <button onClick={() => setStep(step - 1)} className="px-5 py-2 rounded-lg border border-[#ccd8dc] bg-white text-[#333] font-bold text-sm hover:bg-[#f0f4f6]">← Back</button>
+              )}
+              <div className="flex-1"></div>
+              <button onClick={() => step < 3 ? goToStep(step + 1) : handleSubmit()} disabled={status === 'loading'} className="px-6 py-2 bg-[#0F6E56] text-white rounded-lg font-bold text-sm hover:bg-[#1A4F67] disabled:opacity-50">
+                {status === 'loading' ? 'Submitting...' : step < 3 ? 'Next →' : 'Submit Registration'}
+              </button>
+            </div>
+          )}
+
+          {/* PAGE FOOTER */}
+          <div className="bg-[#f0f4f6] px-6 py-3 border-t border-[#dde8ec] flex justify-between items-center flex-wrap gap-2">
+            <div className="text-xs font-bold text-[#0F6E56]">Vendhan Sports Academy</div>
+            <div className="text-xs text-[#8A9AB5]">Summer Camp 2026 — Registration Portal</div>
           </div>
         </motion.div>
       </motion.div>
@@ -1116,6 +1284,13 @@ const JoinForm = () => {
       <div className="max-w-5xl mx-auto px-4 sm:px-6 md:px-8 lg:px-12">
         <motion.div className="bg-brand-navy rounded-[3rem] overflow-hidden shadow-2xl flex flex-col lg:flex-row">
           <motion.div className="lg:w-2/5 p-6 sm:p-8 md:p-10 lg:p-12 bg-brand-orange text-white flex flex-col justify-center">
+            <div className="flex items-center gap-3 mb-4">
+              <img src="images/logo.png" alt="Logo" className="w-12 h-12 object-contain bg-white/10 rounded-lg p-1" />
+              <div>
+                <div className="font-bold text-sm">Vendhan Sports Academy</div>
+                <div className="text-xs text-white/70">Excellence in Sports Education</div>
+              </div>
+            </div>
             <h2 className="text-xs uppercase tracking-[0.2em] text-white/80 font-bold mb-4">Start Today</h2>
             <h3 className="text-3xl sm:text-4xl md:text-5xl mb-6 sm:mb-8">Become a Champion</h3>
             <p className="text-sm sm:text-base text-white/80 mb-8 sm:mb-10 leading-relaxed">Fill out the form to start your journey with Vendhan Sports Academy.</p>
@@ -1123,10 +1298,29 @@ const JoinForm = () => {
           
           <motion.div className="lg:w-3/5 p-6 sm:p-8 md:p-10 lg:p-12 bg-white">
             {status === 'success' ? (
-              <div className="h-full flex flex-col items-center justify-center text-center space-y-4 py-12">
-                <CheckCircle2 className="w-20 h-20 text-green-500" />
-                <h4 className="text-2xl font-bold text-brand-navy">Application Received!</h4>
-                <button onClick={() => setStatus('idle')} className="text-brand-orange font-bold">Submit another</button>
+              <div className="flex flex-col items-center justify-center text-center py-8">
+                <div className="w-full max-w-sm bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden mb-6">
+                  <div className="bg-[#0F6E56] p-4 flex items-center gap-3">
+                    <img src="images/logo.png" alt="Logo" className="w-10 h-10 object-contain bg-white/10 rounded-lg p-1" />
+                    <div>
+                      <div className="text-white font-bold text-sm">Vendhan Sports Academy</div>
+                      <div className="text-white/70 text-xs">Excellence in Sports Education</div>
+                    </div>
+                  </div>
+                  <div className="p-5">
+                    <div className="flex items-center justify-center w-14 h-14 bg-[#E1F5EE] rounded-full mx-auto mb-4">
+                      <CheckCircle2 className="w-8 h-8 text-[#0F6E56]" />
+                    </div>
+                    <h4 className="text-lg font-bold text-brand-navy mb-1">Application Received!</h4>
+                    <p className="text-xs text-slate-500 mb-4">Thank you for joining us</p>
+                    <div className="text-left space-y-2 text-xs bg-slate-50 p-3 rounded-lg">
+                      <div className="flex justify-between"><span className="text-slate-500">Name:</span><span className="font-medium text-slate-800">{formData.fullName}</span></div>
+                      <div className="flex justify-between"><span className="text-slate-500">Program:</span><span className="font-medium text-slate-800">{formData.program}</span></div>
+                      <div className="flex justify-between"><span className="text-slate-500">Phone:</span><span className="font-medium text-slate-800">{formData.phone}</span></div>
+                    </div>
+                  </div>
+                </div>
+                <button onClick={() => setStatus('idle')} className="text-brand-orange font-bold text-sm">Submit another</button>
               </div>
             ) : (
               <form className="space-y-4 sm:space-y-5" onSubmit={handleSubmit} noValidate>

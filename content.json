@@ -234,7 +234,19 @@
         "description": "Fun group games and leadership development activities.",
         "icon": "Users"
       }
-    ]
+    ],
+    "batches": [
+      { "id": "b1", "name": "Batch I", "dates": "Apr 17 - May 6" },
+      { "id": "b2", "name": "Batch II", "dates": "May 1-20" }
+    ],
+    "activityBatches": {
+      "Music": ["b1"],
+      "KidsFun Camp": ["b1"]
+    },
+    "activityBatchDates": {
+      "Music": { "b1": "Apr 17 - May 6" },
+      "KidsFun Camp": { "b1": "Apr 11 - Apr 30" }
+    }
   },
   "achievements_list": [
     {

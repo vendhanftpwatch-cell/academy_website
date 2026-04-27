@@ -3,10 +3,12 @@ import { createServer as createViteServer } from 'vite';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import cors from 'cors';
+import multer from 'multer';
 import path from 'path';
 import fs from 'fs/promises';
 import { fileURLToPath } from 'url';
 import nodemailer from 'nodemailer';
+import { put } from '@vercel/blob';
 
 dotenv.config();
 
@@ -64,14 +66,79 @@ async function startServer() {
   const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://vendhaninfotechodc_db_user:vendhan12345@cluster0.npltaji.mongodb.net/?appName=Cluster0';
   try { await mongoose.connect(MONGODB_URI); console.log('✅ MongoDB Connected'); } catch (err) { console.error('❌ MongoDB Error'); }
 
+  // Vercel Blob upload handler
+  const upload = multer({ storage: multer.memoryStorage() });
+
   // API Routes
   app.get('/api/content', async (req, res) => {
     try {
-      let content = await Content.findOne({});
-      if (content) return res.json(content);
+      let content = await Content.findOne();
+      if (content) return res.json(content.toObject());
       const data = await fs.readFile(CONTENT_FILE, 'utf-8');
       res.json(JSON.parse(data));
-    } catch (err) { res.status(500).send("Error"); }
+    } catch (err) { res.status(500).json({ error: 'Failed to load content' }); }
+  });
+
+  app.post('/api/content', async (req, res) => {
+    try {
+      const newContent = req.body;
+      if (!newContent || typeof newContent !== 'object') {
+        return res.status(400).json({ error: 'Invalid content payload' });
+      }
+
+      const cleanContent = { ...newContent };
+      delete (cleanContent as any)._id;
+
+      let content = await Content.findOne();
+      if (content) {
+        Object.assign(content, cleanContent);
+        content.lastUpdatedAt = new Date();
+        content.lastUpdatedBy = (req.headers['x-updated-by'] as string) || 'admin';
+        content.version = (content.version || 0) + 1;
+        await content.save();
+      } else {
+        content = new Content({
+          ...cleanContent,
+          lastUpdatedAt: new Date(),
+          lastUpdatedBy: (req.headers['x-updated-by'] as string) || 'admin',
+          version: 1,
+        });
+        await content.save();
+      }
+
+      return res.status(200).json({
+        message: 'Content updated',
+        version: content.version,
+        lastUpdatedAt: content.lastUpdatedAt,
+      });
+    } catch (err: any) {
+      console.error('/api/content POST error:', err);
+      res.status(500).json({ error: err.message || 'Failed to save content' });
+    }
+  });
+
+  app.post('/api/upload-image', upload.single('image'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+      }
+
+      const blobToken = process.env.BLOB_READ_WRITE_TOKEN;
+      if (!blobToken) {
+        return res.status(500).json({ error: 'Blob storage not configured. Set BLOB_READ_WRITE_TOKEN env var.' });
+      }
+
+      const fileName = `${Date.now()}-${req.file.originalname}`.replace(/\s+/g, '-');
+      const blob = await put(fileName, req.file.buffer, {
+        access: 'public',
+        token: blobToken,
+      });
+
+      return res.status(200).json({ url: blob.url });
+    } catch (err: any) {
+      console.error('/api/upload-image error:', err);
+      return res.status(500).json({ error: err.message || 'Upload failed' });
+    }
   });
 
   app.post('/api/applications', async (req, res) => {
@@ -94,6 +161,7 @@ async function startServer() {
     app.use(vite.middlewares);
   } else {
     const distPath = path.join(process.cwd(), 'dist');
+    app.use('/images', express.static(path.join(process.cwd(), 'public', 'images')));
     app.use(express.static(distPath));
     app.get('*', (req, res) => res.sendFile(path.join(distPath, 'index.html')));
   }

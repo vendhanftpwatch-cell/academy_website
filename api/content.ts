@@ -49,7 +49,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     await connectDB();
 
     if (req.method === 'GET') {
-      let content = await Content.findOne({});
+      let content = await Content.findOne();
       
       if (content) {
         return res.status(200).json(content.toObject());
@@ -66,7 +66,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(400).json({ error: 'Invalid content' });
       }
 
-      let content = await Content.findOne({});
+      let content = await Content.findOne();
       
       if (content) {
         Object.assign(content, newContent);

@@ -1483,6 +1483,12 @@ export default function App() {
   const [isSummerModalOpen, setIsSummerModalOpen] = useState(false); // <--- NEW STATE
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [adminMode, setAdminMode] = useState<'structured' | 'raw'>('structured');
+  const [adminContent, setAdminContent] = useState<Content>(contentData);
+  const [adminRawJson, setAdminRawJson] = useState<string>(JSON.stringify(contentData, null, 2));
+  const [adminError, setAdminError] = useState<string>('');
+  const [isSavingAdmin, setIsSavingAdmin] = useState(false);
+  const [imageUploadStatus, setImageUploadStatus] = useState<string>('');
 
   useEffect(() => {
     const fetchContent = async () => {
@@ -1490,8 +1496,7 @@ export default function App() {
         const response = await fetch('/api/content');
         if (response.ok) {
           const data = await response.json();
-          // Only update state if API returns valid data with achievements_list
-          if (data && data.achievements_list && data.achievements_list.length > 0) {
+          if (data && data.hero) {
             setContent(data);
           }
         }
@@ -1501,6 +1506,22 @@ export default function App() {
     };
     fetchContent();
   }, []);
+
+  useEffect(() => {
+    if (isEditing) {
+      setAdminContent(content);
+      setAdminRawJson(JSON.stringify(content, null, 2));
+      setAdminError('');
+      setAdminMode('structured');
+      setImageUploadStatus('');
+    }
+  }, [isEditing, content]);
+
+  useEffect(() => {
+    if (adminMode === 'raw') {
+      setAdminRawJson(JSON.stringify(adminContent, null, 2));
+    }
+  }, [adminMode, adminContent]);
 
   const handleSaveContent = async (newContent: Content) => {
     try {
@@ -1541,8 +1562,494 @@ export default function App() {
       console.error('Error saving content:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       alert(`❌ Failed to save content:\n\n${errorMessage}`);
+    } finally {
+      setIsSavingAdmin(false);
     }
   };
+
+  const uploadImageFile = async (file: File) => {
+    const formData = new FormData();
+    formData.append('image', file);
+    setImageUploadStatus('Uploading...');
+
+    const response = await fetch('/api/upload-image', {
+      method: 'POST',
+      body: formData,
+    });
+
+    const result = await response.json();
+    if (!response.ok) {
+      throw new Error(result.error || 'Image upload failed');
+    }
+
+    setImageUploadStatus(`Uploaded ${file.name}`);
+    return result.url as string;
+  };
+
+  const handleAdminSave = async () => {
+    try {
+      setAdminError('');
+      setIsSavingAdmin(true);
+      const contentToSave = adminMode === 'raw'
+        ? JSON.parse(adminRawJson) as Content
+        : adminContent;
+      await handleSaveContent(contentToSave);
+    } catch (error: any) {
+      const message = error instanceof Error ? error.message : 'Invalid content data';
+      setAdminError(message);
+      console.error('Admin save error:', error);
+    } finally {
+      setIsSavingAdmin(false);
+    }
+  };
+
+  const handleCloseAdmin = () => {
+    setIsEditing(false);
+    setAdminError('');
+  };
+
+  const updateHeroField = (field: 'badge' | 'title' | 'subtitle', value: string) => {
+    setAdminContent((prev) => ({
+      ...prev,
+      hero: {
+        ...prev.hero,
+        [field]: value,
+      },
+    }));
+  };
+
+  const updateSlide = (index: number, value: string) => {
+    setAdminContent((prev) => ({
+      ...prev,
+      hero: {
+        ...prev.hero,
+        slides: prev.hero.slides.map((slide, idx) => (idx === index ? value : slide)),
+      },
+    }));
+  };
+
+  const updateEvent = (index: number, field: keyof Event, value: string) => {
+    setAdminContent((prev) => ({
+      ...prev,
+      events: prev.events.map((item, idx) =>
+        idx === index ? { ...item, [field]: value } : item
+      ),
+    }));
+  };
+
+  const updateCoach = (index: number, field: keyof Coach, value: string) => {
+    setAdminContent((prev) => ({
+      ...prev,
+      coaches: prev.coaches.map((item, idx) =>
+        idx === index ? { ...item, [field]: value } : item
+      ),
+    }));
+  };
+
+  const updateProgram = (index: number, field: 'title' | 'category' | 'description' | 'tagline' | 'speciality' | 'image', value: string) => {
+    setAdminContent((prev) => ({
+      ...prev,
+      programs: prev.programs.map((item, idx) =>
+        idx === index ? { ...item, [field]: value } : item
+      ),
+    }));
+  };
+
+  const updateAchievement = (index: number, field: 'label' | 'value' | 'icon', value: string) => {
+    setAdminContent((prev) => ({
+      ...prev,
+      achievements: prev.achievements.map((item, idx) =>
+        idx === index ? { ...item, [field]: value } : item
+      ),
+    }));
+  };
+
+  const updateSummerFeature = (index: number, field: 'title' | 'description' | 'icon', value: string) => {
+    setAdminContent((prev) => ({
+      ...prev,
+      summer_camp: {
+        ...prev.summer_camp,
+        features: prev.summer_camp.features.map((item, idx) =>
+          idx === index ? { ...item, [field]: value } : item
+        ),
+      },
+    }));
+  };
+
+  const AdminEditor = () => (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[160] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
+    >
+      <motion.div
+        initial={{ y: 24, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: 24, opacity: 0 }}
+        transition={{ type: 'spring', stiffness: 260, damping: 24 }}
+        className="w-full max-w-5xl bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-200"
+      >
+        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-200">
+          <div>
+            <h2 className="text-xl font-bold text-slate-900">Admin Portal</h2>
+            <p className="text-sm text-slate-500">Edit website content, upload images, and save changes to the database.</p>
+          </div>
+          <button onClick={handleCloseAdmin} className="text-slate-500 hover:text-slate-900">
+            Close
+          </button>
+        </div>
+        <div className="flex gap-2 border-b border-slate-200 px-6 py-4 bg-slate-50">
+          <button
+            onClick={() => setAdminMode('structured')}
+            className={`rounded-2xl px-4 py-2 text-sm font-semibold ${adminMode === 'structured' ? 'bg-brand-navy text-white' : 'bg-white text-slate-700 border border-slate-200'}`}
+          >
+            Structured Editor
+          </button>
+          <button
+            onClick={() => setAdminMode('raw')}
+            className={`rounded-2xl px-4 py-2 text-sm font-semibold ${adminMode === 'raw' ? 'bg-brand-navy text-white' : 'bg-white text-slate-700 border border-slate-200'}`}
+          >
+            Raw JSON
+          </button>
+        </div>
+        {adminMode === 'raw' ? (
+          <div className="p-6">
+            <label className="block text-sm font-semibold text-slate-700 mb-3">Raw Content JSON</label>
+            <textarea
+              value={adminRawJson}
+              onChange={(e) => setAdminRawJson(e.target.value)}
+              className="w-full min-h-[520px] p-4 rounded-2xl border border-slate-300 font-mono text-xs text-slate-900 bg-slate-50 resize-none"
+            />
+            {adminError && <p className="mt-3 text-sm text-red-600">{adminError}</p>}
+          </div>
+        ) : (
+          <div className="p-6 space-y-8 overflow-y-auto max-h-[calc(100vh-300px)]">
+            {/* HERO SECTION */}
+            <div className="border-b border-slate-200 pb-8">
+              <h3 className="text-lg font-bold text-slate-900 mb-6">Hero Section</h3>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-3">
+                  <label className="block text-sm font-semibold text-slate-700">Badge</label>
+                  <input
+                    value={adminContent.hero.badge}
+                    onChange={(e) => updateHeroField('badge', e.target.value)}
+                    className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm"
+                  />
+                </div>
+                <div className="space-y-3">
+                  <label className="block text-sm font-semibold text-slate-700">Title</label>
+                  <input
+                    value={adminContent.hero.title}
+                    onChange={(e) => updateHeroField('title', e.target.value)}
+                    className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm"
+                  />
+                </div>
+              </div>
+              <div className="space-y-3 mt-4">
+                <label className="block text-sm font-semibold text-slate-700">Subtitle</label>
+                <textarea
+                  value={adminContent.hero.subtitle}
+                  onChange={(e) => updateHeroField('subtitle', e.target.value)}
+                  className="w-full min-h-[90px] rounded-2xl border border-slate-300 px-4 py-3 text-sm"
+                />
+              </div>
+            </div>
+
+            {/* GALLERY SECTION */}
+            <div className="border-b border-slate-200 pb-8">
+              <h3 className="text-lg font-bold text-slate-900 mb-6">Hero Slides / Gallery</h3>
+              <div className="grid gap-4 md:grid-cols-2">
+                {adminContent.hero.slides.map((slide, index) => (
+                  <div key={index} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                    <label className="block text-sm font-semibold text-slate-700 mb-3">Slide {index + 1}</label>
+                    <input
+                      value={slide}
+                      onChange={(e) => updateSlide(index, e.target.value)}
+                      className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm mb-3"
+                      placeholder="Image or video URL"
+                    />
+                    <label htmlFor={`hero-slide-upload-${index}`} className="text-xs font-semibold text-brand-navy cursor-pointer hover:text-brand-orange block">
+                      Upload Image/Video
+                    </label>
+                    <input
+                      id={`hero-slide-upload-${index}`}
+                      type="file"
+                      accept="image/*,video/*"
+                      className="hidden"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        try {
+                          const url = await uploadImageFile(file);
+                          updateSlide(index, url);
+                        } catch (err: any) {
+                          setAdminError(err instanceof Error ? err.message : 'Upload failed');
+                        }
+                      }}
+                    />
+                    {imageUploadStatus && <span className="text-xs text-slate-500 block mt-2">{imageUploadStatus}</span>}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* EVENTS SECTION */}
+            <div className="border-b border-slate-200 pb-8">
+              <h3 className="text-lg font-bold text-slate-900 mb-6">Events</h3>
+              <div className="grid gap-4">
+                {adminContent.events.map((event, index) => (
+                  <div key={event.id || index} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                    <div className="grid gap-3 md:grid-cols-3">
+                      <div>
+                        <label className="block text-xs font-semibold uppercase text-slate-500 mb-2">Title</label>
+                        <input
+                          value={event.title}
+                          onChange={(e) => updateEvent(index, 'title', e.target.value)}
+                          className="w-full rounded-2xl border border-slate-300 px-3 py-2 text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold uppercase text-slate-500 mb-2">Date</label>
+                        <input
+                          value={event.date}
+                          onChange={(e) => updateEvent(index, 'date', e.target.value)}
+                          className="w-full rounded-2xl border border-slate-300 px-3 py-2 text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold uppercase text-slate-500 mb-2">Description</label>
+                        <textarea
+                          value={event.description}
+                          onChange={(e) => updateEvent(index, 'description', e.target.value)}
+                          className="w-full rounded-2xl border border-slate-300 px-3 py-2 text-sm min-h-[70px]"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* PROGRAMS SECTION */}
+            <div className="border-b border-slate-200 pb-8">
+              <h3 className="text-lg font-bold text-slate-900 mb-6">Programs</h3>
+              <div className="grid gap-4">
+                {adminContent.programs.map((program, index) => (
+                  <div key={program.id || index} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                    <div className="grid gap-3 md:grid-cols-2">
+                      <div>
+                        <label className="block text-xs font-semibold uppercase text-slate-500 mb-2">Title</label>
+                        <input
+                          value={program.title}
+                          onChange={(e) => updateProgram(index, 'title', e.target.value)}
+                          className="w-full rounded-2xl border border-slate-300 px-3 py-2 text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold uppercase text-slate-500 mb-2">Category</label>
+                        <input
+                          value={program.category}
+                          onChange={(e) => updateProgram(index, 'category', e.target.value)}
+                          className="w-full rounded-2xl border border-slate-300 px-3 py-2 text-sm"
+                        />
+                      </div>
+                    </div>
+                    <div className="mt-4 grid gap-3 md:grid-cols-2">
+                      <div>
+                        <label className="block text-xs font-semibold uppercase text-slate-500 mb-2">Description</label>
+                        <textarea
+                          value={program.description}
+                          onChange={(e) => updateProgram(index, 'description', e.target.value)}
+                          className="w-full rounded-2xl border border-slate-300 px-3 py-2 text-sm min-h-[70px]"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold uppercase text-slate-500 mb-2">Image URL</label>
+                        <input
+                          value={program.image}
+                          onChange={(e) => updateProgram(index, 'image', e.target.value)}
+                          className="w-full rounded-2xl border border-slate-300 px-3 py-2 text-sm mb-2"
+                        />
+                        <label htmlFor={`program-image-upload-${index}`} className="text-xs font-semibold text-brand-navy cursor-pointer hover:text-brand-orange block">
+                          Upload program image
+                        </label>
+                        <input
+                          id={`program-image-upload-${index}`}
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            try {
+                              const url = await uploadImageFile(file);
+                              updateProgram(index, 'image', url);
+                            } catch (err: any) {
+                              setAdminError(err instanceof Error ? err.message : 'Upload failed');
+                            }
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* COACHES SECTION */}
+            <div className="border-b border-slate-200 pb-8">
+              <h3 className="text-lg font-bold text-slate-900 mb-6">Coaches</h3>
+              <div className="grid gap-4">
+                {adminContent.coaches.map((coach, index) => (
+                  <div key={coach.name || index} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                    <div className="grid gap-3 md:grid-cols-2">
+                      <div>
+                        <label className="block text-xs font-semibold uppercase text-slate-500 mb-2">Name</label>
+                        <input
+                          value={coach.name}
+                          onChange={(e) => updateCoach(index, 'name', e.target.value)}
+                          className="w-full rounded-2xl border border-slate-300 px-3 py-2 text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold uppercase text-slate-500 mb-2">Role</label>
+                        <input
+                          value={coach.role}
+                          onChange={(e) => updateCoach(index, 'role', e.target.value)}
+                          className="w-full rounded-2xl border border-slate-300 px-3 py-2 text-sm"
+                        />
+                      </div>
+                    </div>
+                    <div className="mt-4">
+                      <label className="block text-xs font-semibold uppercase text-slate-500 mb-2">Image URL</label>
+                      <input
+                        value={coach.image}
+                        onChange={(e) => updateCoach(index, 'image', e.target.value)}
+                        className="w-full rounded-2xl border border-slate-300 px-3 py-2 text-sm mb-2"
+                      />
+                      <label htmlFor={`coach-image-upload-${index}`} className="text-xs font-semibold text-brand-navy cursor-pointer hover:text-brand-orange block">
+                        Upload coach image
+                      </label>
+                      <input
+                        id={`coach-image-upload-${index}`}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          try {
+                            const url = await uploadImageFile(file);
+                            updateCoach(index, 'image', url);
+                          } catch (err: any) {
+                            setAdminError(err instanceof Error ? err.message : 'Upload failed');
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* ACHIEVEMENTS SECTION */}
+            <div className="border-b border-slate-200 pb-8">
+              <h3 className="text-lg font-bold text-slate-900 mb-6">Achievements</h3>
+              <div className="grid gap-4">
+                {adminContent.achievements.map((achievement, index) => (
+                  <div key={`${achievement.label}-${index}`} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                    <div className="grid gap-3 md:grid-cols-3">
+                      <div>
+                        <label className="block text-xs font-semibold uppercase text-slate-500 mb-2">Label</label>
+                        <input
+                          value={achievement.label}
+                          onChange={(e) => updateAchievement(index, 'label', e.target.value)}
+                          className="w-full rounded-2xl border border-slate-300 px-3 py-2 text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold uppercase text-slate-500 mb-2">Value</label>
+                        <input
+                          value={achievement.value}
+                          onChange={(e) => updateAchievement(index, 'value', e.target.value)}
+                          className="w-full rounded-2xl border border-slate-300 px-3 py-2 text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold uppercase text-slate-500 mb-2">Icon</label>
+                        <input
+                          value={achievement.icon}
+                          onChange={(e) => updateAchievement(index, 'icon', e.target.value)}
+                          className="w-full rounded-2xl border border-slate-300 px-3 py-2 text-sm"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* SUMMER CAMP SECTION */}
+            <div className="pb-8">
+              <h3 className="text-lg font-bold text-slate-900 mb-6">Summer Camp Features</h3>
+              <div className="grid gap-4">
+                {adminContent.summer_camp.features.map((feature, index) => (
+                  <div key={`${feature.title}-${index}`} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                    <div className="grid gap-3 md:grid-cols-3">
+                      <div>
+                        <label className="block text-xs font-semibold uppercase text-slate-500 mb-2">Title</label>
+                        <input
+                          value={feature.title}
+                          onChange={(e) => updateSummerFeature(index, 'title', e.target.value)}
+                          className="w-full rounded-2xl border border-slate-300 px-3 py-2 text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold uppercase text-slate-500 mb-2">Icon</label>
+                        <input
+                          value={feature.icon}
+                          onChange={(e) => updateSummerFeature(index, 'icon', e.target.value)}
+                          className="w-full rounded-2xl border border-slate-300 px-3 py-2 text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold uppercase text-slate-500 mb-2">Description</label>
+                        <textarea
+                          value={feature.description}
+                          onChange={(e) => updateSummerFeature(index, 'description', e.target.value)}
+                          className="w-full rounded-2xl border border-slate-300 px-3 py-2 text-sm min-h-[70px]"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {adminError && <p className="text-sm text-red-600 mt-6 p-4 bg-red-50 rounded-2xl">{adminError}</p>}
+          </div>
+        )}
+        <div className="flex flex-col gap-3 px-6 pb-6 sm:flex-row sm:justify-end">
+          <button
+            type="button"
+            onClick={handleCloseAdmin}
+            className="w-full sm:w-auto px-5 py-3 rounded-2xl border border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleAdminSave}
+            disabled={isSavingAdmin}
+            className="w-full sm:w-auto px-5 py-3 rounded-2xl bg-brand-navy text-white hover:bg-slate-900 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isSavingAdmin ? 'Saving...' : 'Save Changes'}
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
 
 return (
     <ContentContext.Provider value={content}>
@@ -1578,6 +2085,10 @@ return (
         {selectedImage && (
           <Lightbox imageUrl={selectedImage} onClose={() => setSelectedImage(null)} />
         )}
+
+        <AnimatePresence>
+          {isEditing && <AdminEditor />}
+        </AnimatePresence>
       </div>
     </ContentContext.Provider>
   );

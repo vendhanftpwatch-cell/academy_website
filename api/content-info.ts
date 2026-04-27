@@ -51,7 +51,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     await connectDB();
     
-    const content = await Content.findOne({});
+    const content = await Content.findOne();
     
     if (!content) {
       return res.status(200).json({ 

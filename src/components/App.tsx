@@ -155,13 +155,13 @@ const Navbar = ({ onOpenModal }: { onOpenModal: () => void }) => {
     <>
       <nav className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-300 ${isScrolled ? 'bg-white shadow-md py-2' : 'bg-transparent py-3 sm:py-4'}`}>
         <div className="max-w-7xl mx-auto px-3 sm:px-6 flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <img src="images/logo.png" alt="Logo" className="w-10 h-10 sm:w-14 sm:h-14 md:w-16 md:h-16 object-contain" />
-            <div className={`flex flex-col leading-tight font-bold ${isScrolled ? 'text-brand-navy' : 'text-white'}`}>
-              <span className="text-sm sm:text-lg uppercase tracking-tighter">VENDHAN</span>
-              <span className={`text-[6px] sm:text-[10px] font-semibold ${isScrolled ? 'text-slate-500' : 'text-brand-orange'}`}>Sports Academy</span>
-            </div>
-          </div>
+           <div className="flex items-center gap-3">
+             <img src="images/logo.png" alt="Logo" className="w-14 h-14 sm:w-18 sm:h-18 md:w-20 md:h-20 lg:w-24 lg:h-24 object-contain" />
+             <div className={`flex flex-col leading-tight font-bold ${isScrolled ? 'text-brand-navy' : 'text-white'}`}>
+               <span className="text-base sm:text-lg uppercase tracking-tighter">VENDHAN</span>
+               <span className={`text-sm sm:text-base font-semibold ${isScrolled ? 'text-slate-500' : 'text-brand-orange'}`}>Sports Academy</span>
+             </div>
+           </div>
 
           <div className="hidden lg:flex items-center gap-4 xl:gap-6">
             {navLinks.map((link) => (
@@ -1509,10 +1509,19 @@ export default function App() {
 
   useEffect(() => {
     if (isEditing) {
-      setAdminContent(content);
-      setAdminRawJson(JSON.stringify(content, null, 2));
+      // Add a slight delay to prevent flickering when opening admin editor
+      const timer = setTimeout(() => {
+        setAdminContent(content);
+        setAdminRawJson(JSON.stringify(content, null, 2));
+        setAdminError('');
+        setAdminMode('structured');
+        setImageUploadStatus('');
+      }, 50);
+      
+      return () => clearTimeout(timer);
+    } else {
+      // Reset admin state when closing editor
       setAdminError('');
-      setAdminMode('structured');
       setImageUploadStatus('');
     }
   }, [isEditing, content]);

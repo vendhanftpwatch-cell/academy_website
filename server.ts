@@ -124,17 +124,33 @@ async function startServer() {
       }
 
       const blobToken = process.env.BLOB_READ_WRITE_TOKEN;
-      if (!blobToken) {
-        return res.status(500).json({ error: 'Blob storage not configured. Set BLOB_READ_WRITE_TOKEN env var.' });
+      
+      // If Vercel Blob is configured, use it
+      if (blobToken) {
+        try {
+          const fileName = `${Date.now()}-${req.file.originalname}`.replace(/\s+/g, '-');
+          const blob = await put(fileName, req.file.buffer, {
+            access: 'public',
+            token: blobToken,
+          });
+          return res.status(200).json({ url: blob.url });
+        } catch (blobErr: any) {
+          console.error('Blob upload error:', blobErr);
+          // Fallback if blob fails
+        }
       }
 
+      // Fallback: Save to public/images locally
       const fileName = `${Date.now()}-${req.file.originalname}`.replace(/\s+/g, '-');
-      const blob = await put(fileName, req.file.buffer, {
-        access: 'public',
-        token: blobToken,
-      });
-
-      return res.status(200).json({ url: blob.url });
+      const imagesDir = path.join(process.cwd(), 'public', 'images');
+      
+      // Create directory if it doesn't exist
+      await fs.mkdir(imagesDir, { recursive: true });
+      
+      const filePath = path.join(imagesDir, fileName);
+      await fs.writeFile(filePath, req.file.buffer);
+      
+      return res.status(200).json({ url: `/images/${fileName}` });
     } catch (err: any) {
       console.error('/api/upload-image error:', err);
       return res.status(500).json({ error: err.message || 'Upload failed' });
